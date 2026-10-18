@@ -102,6 +102,7 @@ class WebcamArucoTracker:
         self.rotation_matrix = None
         self.euler_angles = None
         self.rotation_matrices = {m_id: None for m_id in self.marker_ids}
+        self.active_marker_ids = []
         self.origin_transform = None
 
     def _load_marker_layout_from_stl(self, stl_path):
@@ -109,9 +110,10 @@ class WebcamArucoTracker:
         Reads Gripper_updated.stl with trimesh to extract each marker face's normal and center.
         Computes marker offsets (in meters) and R_marker_to_object for IDs 0 to 4.
         """
-        # Precomputed defaults (in meters) as fallback
+        # Precomputed defaults (in meters) for Gripper_updated.stl
+        # Central square face is at Z = 0.0 with normal [0, 0, -1]
         self.marker_offsets = {
-            0: np.array([ 0.000000,  0.000000,  0.066668]),
+            0: np.array([ 0.000000,  0.000000,  0.000000]),
             1: np.array([ 0.054445,  0.000000,  0.036112]),
             2: np.array([ 0.000000,  0.054445,  0.036112]),
             3: np.array([-0.054445,  0.000000,  0.036112]),
@@ -153,12 +155,12 @@ class WebcamArucoTracker:
 
             groups.sort(key=lambda g: g['area'], reverse=True)
             
-            # Top face (normal close to +Z)
-            top_candidates = [g for g in groups if g['normal'][2] > 0.9]
+            # Central square face: flat square at Z=0 with outward normal pointing along -Z
+            top_candidates = [g for g in groups if g['normal'][2] < -0.9 and abs(g['center'][2]) < 5.0]
             top_face = top_candidates[0] if top_candidates else None
             
-            # 4 angled side faces
-            side_faces = [g for g in groups if g['area'] > 5000 and (abs(g['normal'][0]) > 0.5 or abs(g['normal'][1]) > 0.5)]
+            # 4 angled side faces: slant outward toward -Z (normal[2] ~ -0.37)
+            side_faces = [g for g in groups if g['area'] > 5000 and g['normal'][2] < -0.2 and abs(g['normal'][2]) < 0.6]
             
             face_map = {}
             if top_face is not None:
@@ -187,15 +189,15 @@ class WebcamArucoTracker:
         # R_cam_object = R_cam_marker @ R_marker_to_object
         for m_id in self.marker_ids:
             if m_id == 0:
-                # Top face: normal = [0, 0, 1]
-                z_m = np.array([0.0, 0.0, 1.0])
-                up_hint = np.array([1.0, 0.0, 0.0])
+                # Central square face at Z=0: outward normal points along -Z into the camera
+                z_m = np.array([0.0, 0.0, -1.0])
+                up_hint = np.array([1.0, 0.0, 0.0])  # +X is "up" along the handle
                 x_m = np.cross(up_hint, z_m)
                 x_m /= np.linalg.norm(x_m)
                 y_m = np.cross(z_m, x_m)
                 y_m /= np.linalg.norm(y_m)
             else:
-                # Side face normal
+                # Side face outward normal
                 if m_id == 1:
                     normal = np.array([0.92847668, 0.0, -0.3713907])
                 elif m_id == 2:
@@ -206,6 +208,7 @@ class WebcamArucoTracker:
                     normal = np.array([0.0, -0.92847668, -0.3713907])
                 
                 z_m = normal / np.linalg.norm(normal)
+                # Up vector points toward wider base (+Z direction along shaft)
                 up_hint = np.array([0.0, 0.0, 1.0])
                 y_m = up_hint - np.dot(up_hint, z_m) * z_m
                 y_m /= np.linalg.norm(y_m)
@@ -364,29 +367,63 @@ class WebcamArucoTracker:
                     
                     detected_marker_poses[m_id] = {
                         'pos': pos_cam_obj,
-                        'R': R_cam_obj
+                        'R': R_cam_obj,
+                        'R_cam_marker': R_cam_marker
                     }
 
-        # Priority logic:
-        # If top marker (ID 0) is visible, use ONLY it.
-        # Otherwise, average visible side markers (IDs 1-4) and orthonormalize via SVD.
+        # Multi-marker weighted fusion:
+        # Instead of binary priority switching, weight each marker by its view alignment with the camera.
+        # As the central marker tilts out of view, the side markers smoothly take over without jumps.
         fused_pos_cam = None
         fused_R_cam = None
+        self.active_marker_ids = list(detected_marker_poses.keys())
 
-        if self.priority_id in detected_marker_poses:
-            fused_pos_cam = detected_marker_poses[self.priority_id]['pos']
-            fused_R_cam = detected_marker_poses[self.priority_id]['R']
-        else:
-            side_visible = [m for m in [1, 2, 3, 4] if m in detected_marker_poses]
-            if len(side_visible) > 0:
-                pos_list = [detected_marker_poses[m]['pos'] for m in side_visible]
-                R_list = [detected_marker_poses[m]['R'] for m in side_visible]
+        if len(detected_marker_poses) > 0:
+            weights = []
+            pos_list = []
+            R_list = []
+            
+            for m_id, p_data in detected_marker_poses.items():
+                # Marker's outward normal in camera frame (local Z axis is column 2)
+                n_cam = p_data['R_cam_marker'][:, 2]
                 
-                fused_pos_cam = np.mean(pos_list, axis=0)
-                if len(R_list) == 1:
-                    fused_R_cam = R_list[0]
-                else:
-                    fused_R_cam = self._orthonormalize_svd(np.mean(R_list, axis=0))
+                # Line of sight vector from camera to marker
+                tvec = marker_tvecs[m_id].flatten()
+                dist = np.linalg.norm(tvec)
+                los = tvec / dist if dist > 1e-4 else np.array([0.0, 0.0, 1.0])
+                
+                # Cosine of viewing angle: n_cam points outward from face, -los points toward camera
+                cos_theta = -np.dot(n_cam, los)
+                
+                # Only include markers facing toward camera
+                if cos_theta > 0.05:
+                    # Weight strongly favors markers facing perpendicular to camera
+                    # Central square marker (ID 0) gets a slight boost when facing camera directly
+                    boost = 1.2 if m_id == self.priority_id else 1.0
+                    w = float((cos_theta ** 2) * boost)
+                    weights.append(w)
+                    pos_list.append(p_data['pos'])
+                    R_list.append(p_data['R'])
+            
+            if len(weights) > 0:
+                weights = np.array(weights)
+                w_sum = np.sum(weights)
+                if w_sum > 1e-6:
+                    weights /= w_sum
+                    
+                    # Weighted average position
+                    fused_pos_cam = np.zeros(3)
+                    for w, p in zip(weights, pos_list):
+                        fused_pos_cam += w * p
+                        
+                    # Weighted rotation orthonormalization via SVD
+                    if len(R_list) == 1:
+                        fused_R_cam = R_list[0]
+                    else:
+                        R_weighted = np.zeros((3, 3))
+                        for w, R_mat in zip(weights, R_list):
+                            R_weighted += w * R_mat
+                        fused_R_cam = self._orthonormalize_svd(R_weighted)
 
         # Validate rotation matrix (skip frame if invalid)
         valid_detection = False

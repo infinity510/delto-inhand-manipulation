@@ -38,14 +38,23 @@ def main():
     print("1. Manually move the physical arm near the center of your desk.")
     print("2. Hold the object with ArUco markers in the camera view.")
     print("3. Press 'o' in the video window to lock origin and begin tracking.")
-    print("4. Press 'c' to toggle the gripper (Open / Soft Close).")
+    print("4. Press SPACE or 'c' to toggle the gripper (Open / Soft Close).")
     print("5. Press 's' to pause movement. Press 'q' to quit.\n")
     
     is_active = False
     origin_pose = None
     origin_rotation_matrix = None
+    origin_R_scipy = None
+    R_home_scipy = None
     error_printed = False
-    gripper_is_open = False # Starts closed
+    gripper_is_open = False  # Starts closed
+
+    # Teleoperation Sensitivity & Inversion Scales
+    # Set to -1.0 if any axis is inverted relative to your perspective
+    POS_SCALE_X = 1.0   # Forward (+) / Backward (-)
+    POS_SCALE_Y = 1.0   # Left (+) / Right (-)
+    POS_SCALE_Z = 1.0   # Up (+) / Down (-)
+    ROT_SCALE = 1.0     # 1:1 rotation mapping
 
     # Robot home position based on actual safe pose
     ROBOT_HOME_X_MM = 287.8    # Forward (mm)
@@ -59,8 +68,8 @@ def main():
     FACTOR = 1000
 
     # Exponential Moving Average state for smoothing coordinates
-    # Alpha controls smoothness. Lower = smoother but more delay. (0.0 to 1.0)
-    ema_alpha = 0.05
+    # 0.35 provides crisp, real-time response while filtering out high-frequency tremor
+    ema_alpha = 0.35
     ema_target = None
 
     try:
@@ -73,11 +82,11 @@ def main():
             if key == ord('q'):
                 break
             elif key == ord('o'):
-                if positions and positions.get(0) is not None:
+                if positions and positions.get(0) is not None and tracker.rotation_matrix is not None:
                     # 1. Capture Camera Origin
                     origin_pose = positions[0].copy()
-                    if tracker.rotation_matrix is not None:
-                        origin_rotation_matrix = tracker.rotation_matrix.copy()
+                    origin_rotation_matrix = tracker.rotation_matrix.copy()
+                    origin_R_scipy = R_scipy.from_matrix(origin_rotation_matrix)
                     
                     # 2. Capture Robot's Current Physical Pose as the new Home
                     current_robot_pose = piper.GetArmEndPoseMsgs()
@@ -87,10 +96,11 @@ def main():
                     ROBOT_HOME_RX_DEG = current_robot_pose.end_pose.RX_axis / 1000.0
                     ROBOT_HOME_RY_DEG = current_robot_pose.end_pose.RY_axis / 1000.0
                     ROBOT_HOME_RZ_DEG = current_robot_pose.end_pose.RZ_axis / 1000.0
+                    R_home_scipy = R_scipy.from_euler('xyz', [ROBOT_HOME_RX_DEG, ROBOT_HOME_RY_DEG, ROBOT_HOME_RZ_DEG], degrees=True)
                     
                     is_active = True
                     error_printed = False
-                    ema_target = None # Reset smoothing on new origin
+                    ema_target = None  # Reset smoothing on new origin
                     print(f"\n>>> Origin locked! Robot Home dynamically set to: X={ROBOT_HOME_X_MM:.1f}mm, Y={ROBOT_HOME_Y_MM:.1f}mm, Z={ROBOT_HOME_Z_MM:.1f}mm <<<")
                     print("Teleoperation ACTIVE.")
                 else:
@@ -98,63 +108,52 @@ def main():
             elif key == ord('s'):
                 is_active = False
                 print("Teleoperation PAUSED.")
-            elif key == ord('c'):
+            elif key == ord('c') or key == ord(' '):  # Toggle with 'c' or SPACEBAR
                 gripper_is_open = not gripper_is_open
                 if gripper_is_open:
-                    print("Gripper: OPENING")
+                    print("\n>>> Gripper: OPENING (70mm) <<<")
                     # Open to 70mm, normal torque
                     piper.GripperCtrl(70000, 1000, 0x01, 0)
                 else:
-                    print("Gripper: SOFT CLOSING (Grasping)")
-                    # Close to 0mm, but limit torque to 800 (0.8 N.m) to grip without crushing
+                    print("\n>>> Gripper: SOFT CLOSING (Grasping, 0mm @ 0.8 N.m) <<<")
+                    # Close to 0mm, limit torque to 800 (0.8 N.m) to grip without crushing
                     piper.GripperCtrl(0, 800, 0x01, 0)
             
             if frame is not None:
                 if positions and positions.get(0) is not None:
                     current_raw_pose = positions[0]
                     
-                    if is_active and origin_pose is not None:
-                        # Position delta from captured origin (meters)
-                        dx_m = current_raw_pose[0] - origin_pose[0]
-                        dy_m = current_raw_pose[1] - origin_pose[1]
-                        dz_m = current_raw_pose[2] - origin_pose[2]
+                    if is_active and origin_pose is not None and origin_R_scipy is not None and R_home_scipy is not None:
+                        # Position delta from captured origin (meters -> mm with directional scaling)
+                        dx_mm = (current_raw_pose[0] - origin_pose[0]) * 1000.0 * POS_SCALE_X
+                        dy_mm = (current_raw_pose[1] - origin_pose[1]) * 1000.0 * POS_SCALE_Y
+                        dz_mm = (current_raw_pose[2] - origin_pose[2]) * 1000.0 * POS_SCALE_Z
                         
-                        # Rotation delta using 3x3 rotation matrix for robustness
-                        if tracker.rotation_matrix is not None and origin_rotation_matrix is not None:
-                            # R_delta = R_current @ R_origin.T
-                            R_delta = tracker.rotation_matrix @ origin_rotation_matrix.T
-                            delta_euler_deg = R_scipy.from_matrix(R_delta).as_euler('xyz', degrees=True)
-                            drx_deg = delta_euler_deg[0]
-                            dry_deg = delta_euler_deg[1]
-                            drz_deg = delta_euler_deg[2]
+                        # True 3D SO(3) rotation delta (eliminates gimbal lock and axis swapping)
+                        if tracker.rotation_matrix is not None:
+                            R_curr_scipy = R_scipy.from_matrix(tracker.rotation_matrix)
+                            R_delta = R_curr_scipy * origin_R_scipy.inv()
+                            
+                            if ROT_SCALE != 1.0:
+                                rotvec = R_delta.as_rotvec() * ROT_SCALE
+                                R_delta = R_scipy.from_rotvec(rotvec)
+                                
+                            R_target = R_delta * R_home_scipy
+                            target_rx_deg, target_ry_deg, target_rz_deg = R_target.as_euler('xyz', degrees=True)
                         else:
-                            # Fallback: subtraction of euler angles
-                            drx_rad = current_raw_pose[3] - origin_pose[3]
-                            dry_rad = current_raw_pose[4] - origin_pose[4]
-                            drz_rad = current_raw_pose[5] - origin_pose[5]
-                            drx_deg = math.degrees(drx_rad)
-                            dry_deg = math.degrees(dry_rad)
-                            drz_deg = math.degrees(drz_rad)
+                            target_rx_deg, target_ry_deg, target_rz_deg = ROBOT_HOME_RX_DEG, ROBOT_HOME_RY_DEG, ROBOT_HOME_RZ_DEG
                         
-                        # Convert position deltas: meters -> mm
-                        dx_mm = dx_m * 1000.0
-                        dy_mm = dy_m * 1000.0
-                        dz_mm = dz_m * 1000.0
-                        
-                        # Apply delta to the robot's home position (in mm and degrees)
+                        # Apply delta to the robot's home position (in mm)
                         target_x_mm = ROBOT_HOME_X_MM + dx_mm
                         target_y_mm = ROBOT_HOME_Y_MM + dy_mm
                         target_z_mm = ROBOT_HOME_Z_MM + dz_mm
-                        target_rx_deg = ROBOT_HOME_RX_DEG + drx_deg
-                        target_ry_deg = ROBOT_HOME_RY_DEG + dry_deg
-                        target_rz_deg = ROBOT_HOME_RZ_DEG + drz_deg
                         
                         # Enforce the safety bounding box (in mm)
                         target_x_mm, target_y_mm, target_z_mm = clip_pose_mm(
                             target_x_mm, target_y_mm, target_z_mm
                         )
 
-                        # Apply Exponential Moving Average (EMA) to smooth out vibrations
+                        # Apply Exponential Moving Average (EMA) to smooth out hand jitter
                         current_target = np.array([
                             target_x_mm, target_y_mm, target_z_mm,
                             target_rx_deg, target_ry_deg, target_rz_deg
@@ -189,13 +188,23 @@ def main():
                                 print("-------------------------\n")
                                 error_printed = True
                                 
-                        # Visual Telemetry
+                        # Visual Telemetry HUD
+                        active_ids = getattr(tracker, 'active_marker_ids', [])
+                        grip_str = "OPEN (70mm)" if gripper_is_open else "CLOSED (Grasp)"
+                        grip_col = (0, 255, 0) if gripper_is_open else (0, 165, 255)
+                        
                         cv2.putText(frame, "STATUS: ACTIVE", (10, 30), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                        cv2.putText(frame, f"Robot X:{sm_x:.0f}mm Y:{sm_y:.0f}mm Z:{sm_z:.0f}mm", (10, 60), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                        cv2.putText(frame, "Press 's' to PAUSE", (10, frame.shape[0] - 20), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                        cv2.putText(frame, f"Robot: X:{sm_x:.0f} Y:{sm_y:.0f} Z:{sm_z:.0f} mm", (10, 60), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
+                        cv2.putText(frame, f"Orientation: RX:{sm_rx:.1f} RY:{sm_ry:.1f} RZ:{sm_rz:.1f} deg", (10, 90), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 255, 200), 1)
+                        cv2.putText(frame, f"Tracked Markers: {active_ids}", (10, 120), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                        cv2.putText(frame, f"Gripper: {grip_str}", (10, 150), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.65, grip_col, 2)
+                        cv2.putText(frame, "Press SPACE/'c': Gripper | 's': Pause | 'q': Quit", (10, frame.shape[0] - 20), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
                     else:
                         cv2.putText(frame, "STATUS: WAITING FOR ORIGIN", (10, 30), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
