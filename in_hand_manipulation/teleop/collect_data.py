@@ -46,8 +46,14 @@ class TeleopSystem:
         self.target_quat = np.array([1.0, 0.0, 0.0, 0.0])  # [w, x, y, z]
         self.last_saved_filename = None
         
-        # Ensure data dir exists
-        os.makedirs("data", exist_ok=True)
+        # Ensure data dir exists (prefer data/raw if structured, else fallback to data)
+        candidate_data_dirs = ["data/raw", "../../data/raw", "data", "../../data"]
+        self.data_dir = "data/raw"
+        for cand in candidate_data_dirs:
+            if os.path.exists(cand):
+                self.data_dir = cand
+                break
+        os.makedirs(self.data_dir, exist_ok=True)
         
         listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
         listener.start()
@@ -109,11 +115,11 @@ class TeleopSystem:
             obj_names_map = {1: 'cylinder', 2: 'cube', 3: 'cuboid'}
             obj_name = obj_names_map.get(self.active_object, 'unknown')
             import glob
-            existing_files = glob.glob(f"data/{obj_name}_*.hdf5")
+            existing_files = glob.glob(os.path.join(self.data_dir, f"{obj_name}_*.hdf5"))
             max_idx = 0
             for f in existing_files:
                 try:
-                    # extract the number from strings like 'data/cube_12.hdf5'
+                    # extract the number from strings like 'data/raw/cube_12.hdf5'
                     idx = int(os.path.basename(f).replace(f"{obj_name}_", "").replace(".hdf5", ""))
                     if idx > max_idx:
                         max_idx = idx
@@ -121,7 +127,7 @@ class TeleopSystem:
                     pass
             
             self.episode_counter = max_idx + 1
-            filename = f"data/{obj_name}_{self.episode_counter}.hdf5"
+            filename = os.path.join(self.data_dir, f"{obj_name}_{self.episode_counter}.hdf5")
             with h5py.File(filename, 'w') as f:
                 f.create_dataset('robot_qpos', data=np.array(self.episode_data['robot_qpos']))
                 f.create_dataset('robot_qvel', data=np.array(self.episode_data['robot_qvel']))

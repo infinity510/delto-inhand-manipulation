@@ -19,26 +19,34 @@ This project focuses on **Dexterous In-Hand Manipulation**, specifically targeti
 ## 2. Directory Structure
 
 ```
-IN_HAND_MANIPULATION-main/
+DC_PROJECT/
 │
-├── data/                                  # Recorded HDF5 demonstration trajectories
+├── data/                                  # Demonstration trajectories
+│   ├── raw/                               # Raw recorded HDF5 demonstration episodes
+│   └── processed/                         # Filtered & trimmed HDF5 datasets
 │
 ├── in_hand_manipulation/
 │   ├── simulation/
-│   │   ├── scene_cube.xml                 # MuJoCo scene with robot and all 5 objects
-│   │   ├── scene.xml                      # MuJoCo scene (gripper only)
-│   │   ├── tesollo_gym_env.py             # Gymnasium RL environment
-│   │   └── ... (meshes/assets)
+│   │   ├── scene_cube.xml                 # MuJoCo scene with Delto-3F gripper & objects
+│   │   ├── gripper_only.xml               # Gripper MuJoCo kinematic model
+│   │   ├── gripper_only.urdf              # Delto-3F URDF definition
+│   │   └── meshes/                        # High-resolution collision STL meshes
 │   │
 │   ├── teleop/
 │   │   ├── collect_data.py                # Main data collection script (HER, Multi-object)
-│   │   ├── teleop_sim.py                  # Sandbox teleop testing (no recording)
-│   │   ├── webcam_aruco_tracker.py        # Threaded ArUco tracking pipeline
-│   │   ├── aruco_tracker.py               # (Legacy) RealSense tracker
-│   │   ├── test_rs.py                     # RealSense camera tester
-│   │   └── dex_retargeting_config.yml     # Inverse Kinematics retargeting params
+│   │   ├── preprocess_data.py             # Data filtering and dead-time trimming pipeline
+│   │   ├── replay_data.py                 # Interactive demonstration playback in MuJoCo
+│   │   ├── inspect_data.py                # Quality inspection & drop/jitter validator
+│   │   ├── webcam_aruco_tracker.py        # Threaded zero-latency ArUco tracking pipeline
+│   │   └── delto_3f_retarget.yml          # IK retargeting configuration
+│   │
+│   ├── train_bc.py                        # Behavior Cloning (imitation learning)
+│   ├── train_ppo.py                       # Deep PPO reinforcement learning engine
+│   ├── evaluate.py                        # Nominal baseline benchmark evaluator
+│   └── evaluate_dr.py                     # Stressed Sim-to-Real benchmark evaluator
 │
-└── teleop_pipeline_guide.md              # This documentation file
+└── docs/
+    └── teleop_pipeline_guide.md           # This documentation file
 ```
 
 ---
@@ -133,11 +141,10 @@ python replay_data.py
 # Left / Right Arrows = Skip to prev/next recording
 ```
 
-### Data Preprocessing (For Isaac Sim)
+### Data Preprocessing
 ```bash
-cd in_hand_manipulation/teleop
-python preprocess_data.py
-# Reads from ../../data/ and outputs trimmed episodes to ../../data_processed/
+python in_hand_manipulation/teleop/preprocess_data.py
+# Reads from data/raw/ and outputs trimmed episodes to data/processed/
 ```
 
 ### Sandbox Teleoperation (No Data Saved)

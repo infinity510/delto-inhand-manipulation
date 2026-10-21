@@ -1,4 +1,4 @@
-import h5py, glob, os
+import h5py, glob, os, sys
 import numpy as np
 
 def quat_diff(q1, q2):
@@ -7,8 +7,31 @@ def quat_diff(q1, q2):
     dot = np.clip(dot, -1.0, 1.0)
     return 2 * np.arccos(dot)
 
-files = sorted(glob.glob('/mnt/Windows_SSD/Users/sheet/Desktop/AKSHAT/DC_PROJECT/data_processed/*.hdf5'))
-print(f'Inspecting {len(files)} files...\n')
+# Discover dataset directory dynamically
+data_target = sys.argv[1] if len(sys.argv) > 1 else None
+candidate_dirs = [
+    data_target,
+    "data/processed",
+    "../data/processed",
+    "../../data/processed",
+    "data_processed",
+    "../data_processed",
+    "data/raw",
+    "../data/raw",
+    "data",
+]
+selected_dir = None
+for cand in candidate_dirs:
+    if cand and os.path.isdir(cand) and glob.glob(os.path.join(cand, "*.hdf5")):
+        selected_dir = cand
+        break
+
+if selected_dir is None:
+    print("Error: Could not locate any HDF5 files to inspect. Pass path as: python inspect_data.py <path_to_data>")
+    sys.exit(1)
+
+files = sorted(glob.glob(os.path.join(selected_dir, "*.hdf5")))
+print(f'Inspecting {len(files)} files from: {os.path.abspath(selected_dir)}\n')
 
 bad_files = []
 warnings = []

@@ -664,8 +664,14 @@ def generate_metric_report(results, epsilon_ratio: float, checkpoint_path: str):
     report_str = "\n".join(lines)
     print(report_str)
 
-    # Save to EVALUATION_REPORT.md in root
-    report_file = os.path.join(PROJECT_ROOT, "EVALUATION_REPORT.md")
+    # Save to evaluation/reports/EVALUATION_REPORT.md
+    target_dir = os.path.join(PROJECT_ROOT, "evaluation", "reports")
+    if os.path.exists(target_dir):
+        report_file = os.path.join(target_dir, "EVALUATION_REPORT.md")
+    elif os.path.exists(os.path.join(PROJECT_ROOT, "EVAL")):
+        report_file = os.path.join(PROJECT_ROOT, "EVAL", "EVALUATION_REPORT.md")
+    else:
+        report_file = os.path.join(PROJECT_ROOT, "EVALUATION_REPORT.md")
     with open(report_file, "w") as f:
         f.write(report_str + "\n")
 

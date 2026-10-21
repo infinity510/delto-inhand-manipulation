@@ -1,0 +1,23 @@
+# Core Deep Learning & Reinforcement Learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Physics Simulation Engine
+mujoco>=3.0.0
+
+# Scientific & Numerical Computing
+numpy>=1.24.0
+scipy>=1.10.0
+h5py>=3.8.0
+
+# Computer Vision & Teleoperation Tracking
+opencv-python>=4.7.0
+pynput>=1.7.6
+
+# Visualization & Data Analysis
+matplotlib>=3.7.0
+
+# Configuration & Documentation
+pyyaml>=6.0
+markdown>=3.4.0
+pygments>=2.14.0

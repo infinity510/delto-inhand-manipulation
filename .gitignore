@@ -444,8 +444,15 @@ fine_tune_training/
 metrics.jsonl
 *.jsonl
 !in_hand_manipulation/bc_actor_checkpoint.pth
+!models/best_model.pth
+!models/best_model_with_dr.pth
+!models/best_model_clean.pth
 !best_model/best_model.pth
 !best_model/best_model_with_dr.pth
 !best_model/best_model_clean.pth
+
+# Local Environment & Compatibility Symlinks
+.env
+IN_HAND_MANIPULATION-
 
 

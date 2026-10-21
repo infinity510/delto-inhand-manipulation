@@ -722,7 +722,7 @@ The policy achieved an immediate and decisive performance breakthrough:
 1. **Critic Warm-Up (10 Iterations):** Freezing the Actor while the Critic calibrated to $w_4 = 25.0$ completely prevented Temporal Difference (TD) shock and policy divergence.
 2. **Dense Progress Signal ($w_{\text{progress}} = 4.0$):** Provided uninterrupted gradient flow across the $25^\circ \to 12^\circ$ boundary, overcoming the physical face-edge barrier.
 3. **Sub-Tremor Motor Noise (`--log_std -3.3`):** Dropping actuator standard deviation to $\approx 2.1^\circ$ eliminated fingertip vibrations, allowing the cube to settle stably within sub-$12^\circ$ alignment.
-4. **Permanent Best Model Backup:** Saved [`checkpoints_ppo/ppo_stage1_best_model.pth`](file:///mnt/Windows_SSD/Users/sheet/Desktop/AKSHAT/DC_PROJECT/checkpoints_ppo/ppo_stage1_best_model.pth) to guarantee a permanent, protected fallback.
+4. **Permanent Best Model Backup:** Saved `checkpoints_ppo/ppo_stage1_best_model.pth` to guarantee a permanent, protected fallback.
 
 
 ## 15. Angular Error as the Primary Governing Factor for Best Model Selection

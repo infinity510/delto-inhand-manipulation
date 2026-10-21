@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "in-hand-manipulation"
+version = "1.0.0"
+description = "Autonomous Deep Reinforcement Learning for 3D In-Hand Dexterous Manipulation on the Delto Gripper-3F"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Akshat Sarda", email = "akshat.sarda2007@gmail.com" }
+]
+keywords = [
+    "robotics",
+    "reinforcement-learning",
+    "in-hand-manipulation",
+    "dexterous-manipulation",
+    "mujoco",
+    "sim-to-real",
+    "domain-randomization",
+    "ppo"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Robotics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License"
+]
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "mujoco>=3.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "h5py>=3.8.0",
+    "opencv-python>=4.7.0",
+    "pynput>=1.7.6",
+    "matplotlib>=3.7.0",
+    "pyyaml>=6.0",
+    "markdown>=3.4.0",
+    "pygments>=2.14.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["in_hand_manipulation*"]

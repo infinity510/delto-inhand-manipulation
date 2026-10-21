@@ -199,14 +199,25 @@ class ActorNetwork(nn.Module):
 
 
 def train():
-    # Attempt to locate the dataset (supports both explicit and raw teleop files)
+    # Attempt to locate the dataset (supports structured data/processed, data/raw, and legacy fallbacks)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(base_dir) # Go up to DC_PROJECT
-    data_dir = os.path.join(parent_dir, 'data_processed')
-    if not os.path.exists(data_dir):
-        data_dir = os.path.join(parent_dir, 'data')
+    candidate_data_dirs = [
+        os.path.join(parent_dir, 'data', 'processed'),
+        os.path.join(parent_dir, 'data_processed'),
+        os.path.join(parent_dir, 'data', 'raw'),
+        os.path.join(parent_dir, 'data'),
+    ]
+    data_dir = None
+    for cand in candidate_data_dirs:
+        if os.path.isdir(cand) and glob.glob(os.path.join(cand, "*.hdf5")):
+            data_dir = cand
+            break
+
+    if data_dir is None:
+        raise FileNotFoundError(f"Could not locate demonstration HDF5 files in candidate directories: {candidate_data_dirs}")
     
-    print(f"Reading dataset from: {data_dir}")
+    print(f"Reading dataset from: {os.path.abspath(data_dir)}")
     
     # Initialize Datasets
     train_dataset = BCDataset(data_dir, split='train', train_ratio=0.85)

@@ -7,14 +7,26 @@ import glob
 import h5py
 from pynput import keyboard
 
-# Find data dir
-data_dir = "data_processed"
-if not os.path.exists(data_dir):
-    data_dir = "../data_processed"
-    if not os.path.exists(data_dir):
-        data_dir = "../../data_processed"
-        if not os.path.exists(data_dir):
-            data_dir = "/mnt/Windows_SSD/Users/sheet/Desktop/AKSHAT/DC_PROJECT/data_processed"
+# Dynamic discovery of processed data directory
+candidate_dirs = [
+    "data/processed",
+    "../data/processed",
+    "../../data/processed",
+    "data_processed",
+    "../data_processed",
+    "../../data_processed",
+    "data/raw",
+    "../data/raw",
+    "data",
+]
+data_dir = None
+for cand in candidate_dirs:
+    if os.path.isdir(cand) and glob.glob(os.path.join(cand, "*.hdf5")):
+        data_dir = cand
+        break
+
+if data_dir is None:
+    data_dir = "data/processed"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCENE_XML = os.path.join(SCRIPT_DIR, "../simulation/scene_cube.xml")

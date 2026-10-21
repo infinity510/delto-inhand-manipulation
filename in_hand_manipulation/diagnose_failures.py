@@ -4,10 +4,27 @@ import numpy as np
 import torch
 from scipy.spatial import transform
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "in_hand_manipulation"))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from in_hand_manipulation.train_ppo import DeltoInHandManipulationEnv, ActorNetwork
 
-checkpoint_path = "best_model/best_model.pth"
+candidate_ckpts = [
+    os.path.join(PROJECT_ROOT, "models", "best_model_with_dr.pth"),
+    os.path.join(PROJECT_ROOT, "models", "best_model.pth"),
+    os.path.join(PROJECT_ROOT, "best_model", "best_model.pth"),
+]
+checkpoint_path = None
+for cand in candidate_ckpts:
+    if os.path.exists(cand):
+        checkpoint_path = cand
+        break
+
+if checkpoint_path is None:
+    raise FileNotFoundError(f"Champion checkpoint not found in candidate paths: {candidate_ckpts}")
+
 ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
 actor = ActorNetwork(obs_dim=39, act_dim=12)
 state_dict = ckpt.get('actor_state_dict', ckpt.get('model_state_dict', ckpt))
@@ -17,8 +34,10 @@ actor.eval()
 obs_mean = ckpt.get("obs_mean", None)
 obs_std = ckpt.get("obs_std", None)
 
+scene_xml_path = os.path.join(SCRIPT_DIR, "simulation", "scene_cube.xml")
+
 env = DeltoInHandManipulationEnv(
-    scene_xml_path="in_hand_manipulation/simulation/scene_cube.xml",
+    scene_xml_path=scene_xml_path,
     obs_mean=obs_mean,
     obs_std=obs_std,
     max_episode_steps=250,

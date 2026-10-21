@@ -87,16 +87,42 @@ def preprocess_dataset(input_dir, output_dir, movement_threshold=0.005, padding_
     print(f"Processed dataset saved to: {os.path.abspath(output_dir)}")
 
 if __name__ == "__main__":
-    # Find data dir
-    data_dir = "data"
-    if not os.path.exists(data_dir):
-        data_dir = "../data"
-        if not os.path.exists(data_dir):
-            data_dir = "../../data"
-            if not os.path.exists(data_dir):
-                data_dir = "/mnt/Windows_SSD/Users/sheet/Desktop/AKSHAT/DC_PROJECT/data"
-                
-    output_dir = os.path.join(os.path.dirname(data_dir), "data_processed")
-    
-    preprocess_dataset(input_dir=data_dir, output_dir=output_dir)
+    import argparse
+    parser = argparse.ArgumentParser(description="Preprocess collected HDF5 demonstration trajectories.")
+    parser.add_argument("--input_dir", type=str, default=None, help="Input raw dataset directory containing HDF5 files")
+    parser.add_argument("--output_dir", type=str, default=None, help="Output directory for processed HDF5 files")
+    parser.add_argument("--threshold", type=float, default=0.005, help="Movement threshold to detect motion")
+    parser.add_argument("--padding", type=int, default=25, help="Padding frames before and after motion")
+    args = parser.parse_args()
+
+    # Dynamic discovery of raw data directory
+    candidate_raw_dirs = [
+        args.input_dir if args.input_dir else None,
+        "data/raw",
+        "../data/raw",
+        "../../data/raw",
+        "data",
+        "../data",
+        "../../data",
+    ]
+    data_dir = None
+    for cand in candidate_raw_dirs:
+        if cand and os.path.isdir(cand) and glob.glob(os.path.join(cand, "*.hdf5")):
+            data_dir = cand
+            break
+
+    if data_dir is None:
+        raise FileNotFoundError("Could not locate raw HDF5 dataset directory. Specify with --input_dir.")
+
+    # Dynamic discovery of processed output directory
+    if args.output_dir:
+        output_dir = args.output_dir
+    else:
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        preferred_out = os.path.join(project_root, "data", "processed")
+        output_dir = preferred_out if os.path.exists(os.path.join(project_root, "data")) else "data_processed"
+
+    print(f"[Dataset Pipeline] Reading raw files from: {os.path.abspath(data_dir)}")
+    print(f"[Dataset Pipeline] Target output directory: {os.path.abspath(output_dir)}")
+    preprocess_dataset(input_dir=data_dir, output_dir=output_dir, movement_threshold=args.threshold, padding_frames=args.padding)
 

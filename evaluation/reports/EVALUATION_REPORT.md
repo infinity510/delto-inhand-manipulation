@@ -1,6 +1,6 @@
 ======================================================================================
 IN-HAND MANIPULATION STRATIFIED BENCHMARK REPORT (@10.0% Error Tolerance)
-Checkpoint: /mnt/Windows_SSD/Users/sheet/Desktop/AKSHAT/DC_PROJECT/fine_tune_training/stage5_dr_vision_delay/ppo_eval_best_actor.pth
+Checkpoint: models/best_model_clean.pth
 Total Episodes Evaluated: 600
 ======================================================================================
 

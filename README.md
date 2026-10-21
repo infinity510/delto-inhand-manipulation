@@ -5,19 +5,19 @@
 [![MuJoCo 3.x](https://img.shields.io/badge/MuJoCo-3.x-blue.svg)](https://mujoco.org/)
 [![Algorithm](https://img.shields.io/badge/RL-PPO%20%2B%20Huber%20Loss-brightgreen.svg)]()
 [![Hardware Safety](https://img.shields.io/badge/Hardware%20Safety-Zero%20Palm%20Intrusion-success.svg)]()
-[![Documentation](https://img.shields.io/badge/Documentation-54--Page%20Technical%20PDF-red.svg)](IN_HAND_MANIPULATION_DOCUMENTATION.pdf)
+[![Documentation](https://img.shields.io/badge/Documentation-55--Page%20Technical%20PDF-red.svg)](docs/IN_HAND_MANIPULATION_DOCUMENTATION.pdf)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An open-source deep reinforcement learning framework for high-dexterity **autonomous in-hand manipulation** on the **Delto Gripper-3F** (12-DOF anthropomorphic robotic hand). The policy autonomously reorients arbitrary geometric primitives (**Cube**, **Cylinder**, **Cuboid**) across continuous 3D rotation trajectories ($10^\circ \text{ to } 90^\circ$ geodesic error) using multi-finger dynamic in-hand gaiting under full **Sim-to-Real Domain Randomization (DR)**.
 
-> 📄 **Comprehensive Technical Monograph**: For an exhaustive, 54-page deep dive covering all 57 reward design iterations, contact mechanics, GAE cliff bug resolution, and convergence mathematical proofs, refer to [**`IN_HAND_MANIPULATION_DOCUMENTATION.pdf`**](IN_HAND_MANIPULATION_DOCUMENTATION.pdf) and [**`learning.md`**](learning.md).
+> 📄 **Comprehensive Technical Monograph**: For an exhaustive, 55-page deep dive covering all 57 reward design iterations, contact mechanics, GAE cliff bug resolution, and convergence mathematical proofs, refer to [**`docs/IN_HAND_MANIPULATION_DOCUMENTATION.pdf`**](docs/IN_HAND_MANIPULATION_DOCUMENTATION.pdf) and [**`docs/learning.md`**](docs/learning.md).
 
 ---
 
 ## 🌟 Key Highlights & Milestones
 
 - **12-DOF Anthropomorphic In-Hand Gaiting**: Direct continuous control of 12 revolute joint position actuators ($K_p=50.0, K_d=2.0$) at $50\text{ Hz}$ ($20\text{ ms}$ control loop).
-- **Sim-to-Real Domain Randomization Champion (`best_model/best_model.pth`)**:
+- **Sim-to-Real Domain Randomization Champion (`models/best_model_with_dr.pth`)**:
   - **Overall Benchmark Score (@10.0% Tolerance)**: **`0.7519`** (Surpassing baseline $0.7026$).
   - **Overall Reorientation Success Rate**: **`70.0%`** across full $[10^\circ, 90^\circ]$ envelope.
   - **Range 1 ($10^\circ \text{--} 40^\circ$) Small/Medium Rotations**: **`86.7%` Success**, **`89.4%` Rotational Closure**, **`94.3%` Object Retention**.
@@ -190,40 +190,85 @@ Range 2 (40° - 90° Large Dynamic In-Hand Gaiting):
 
 ```
 .
-├── IN_HAND_MANIPULATION_DOCUMENTATION.pdf  # 55-page publication-grade PDF documentation
-├── README.md                               # Root repository documentation & guide
-├── learning.md                             # Comprehensive technical notes (57 sections)
-├── best_model/                             # Champion production policy checkpoints
-│   ├── best_model_with_dr.pth              # Sim-to-Real DR Champion (Stage 15 Iter 500)
+├── README.md                               # Root repository documentation & overview
+├── LICENSE                                 # MIT Open-Source License
+├── requirements.txt                        # Pinned dependencies
+├── pyproject.toml                          # Modern Python packaging configuration
+├── .env.example                            # Hardware & simulation environment template
+│
+├── data/                                   # Demonstration datasets (HER-labeled, 50 Hz)
+│   ├── raw/                                # 60 raw recorded teleoperation HDF5 files
+│   ├── processed/                          # 60 cleaned, trimmed & smoothed HDF5 files
+│   └── README.md                           # Dataset schema & modalities documentation
+│
+├── models/                                 # Production champion checkpoints
+│   ├── best_model_with_dr.pth              # Primary Sim-to-Real DR Champion
 │   ├── best_model_clean.pth                # Nominal baseline presentation model
 │   ├── best_model.pth                      # Canonical pointer & backwards-compatible alias
-│   └── README.md                           # Exact checkpoint telemetry & verification logs
+│   └── README.md                           # Checkpoint telemetry & verification specs
+│
+├── evaluation/                             # Canonical 600-episode benchmark reports
+│   ├── reports/                            # Standardized evaluation markdown reports
+│   │   ├── EVALUATION_DR_REPORT.md         # Sim-to-Real domain randomization report
+│   │   ├── EVALUATION_REPORT.md            # Clean nominal baseline benchmark report
+│   │   └── OVERNIGHT_PROGRESS_REPORT.md    # Multi-stage training progression report
+│   └── README.md                           # Benchmark protocols & metric formulas
+│
+├── docs/                                   # Complete technical documentation & manuals
+│   ├── IN_HAND_MANIPULATION_DOCUMENTATION.pdf # 55-page publication-grade PDF monograph
+│   ├── learning.md                         # 57-section engineering deep dive
+│   ├── teleop_pipeline_guide.md            # Webcam ArUco tracking & teleop manual
+│   ├── commands.txt                        # Quick CLI command reference cheat-sheet
+│   └── README.md                           # Documentation directory index
+│
 ├── media/                                  # Demonstration media & analytical figures
-│   ├── videos/                             # Video MP4 demonstrations
+│   ├── videos/                             # High-definition video recordings
 │   │   ├── stage1_nominal_dexterity.mp4    # Stage 1 nominal reorientation video
 │   │   └── stage2_large_angle_gaiting.mp4  # Stage 2 large-angle in-hand gaiting video
-│   └── plots/                              # Telemetry & convergence plots
-│       └── training_accuracy.png           # Accuracy progression plot
-├── EVAL/                                   # Evaluation benchmark reports
-│   ├── EVALUATION_DR_REPORT.md             # 600-episode Sim-to-Real benchmark report
-│   ├── EVALUATION_REPORT.md                # 600-episode clean nominal benchmark report
-│   └── OVERNIGHT_PROGRESS_REPORT.md        # Multi-stage training progression report
-├── in_hand_manipulation/                   # Core simulation & RL codebase
+│   ├── plots/                              # Convergence curves & telemetry plots
+│   │   └── training_accuracy.png           # Accuracy progression plot
+│   └── README.md                           # Media directory index & descriptions
+│
+├── resources/                              # Foundational literature & references
+│   ├── papers/                             # Peer-reviewed research papers (Dactyl, AnyTeleop)
+│   ├── notes/                              # Mathematical & RL theory derivations
+│   └── README.md                           # Literature review & references guide
+│
+├── scripts/                                # Utility launchers & automation scripts
+│   ├── run_eval_demo.sh                    # Interactive CLI benchmark launcher
+│   ├── run_benchmark.sh                    # High-throughput 16-worker batch runner
+│   ├── generate_documentation_pdf.py       # KaTeX Chrome PDF compiler script
+│   └── README.md                           # Scripts documentation
+│
+├── in_hand_manipulation/                   # Core simulation & RL Python package
+│   ├── __init__.py                         # Package initializer
 │   ├── train_ppo.py                        # PPO training engine & vectorized environments
+│   ├── train_bc.py                         # Behavior Cloning imitation learning
 │   ├── evaluate.py                         # Nominal stratified benchmark evaluator
 │   ├── evaluate_dr.py                      # Stressed Sim-to-Real benchmark evaluator
-│   ├── early_stopping_watchdog.py          # Degradation watchdog & champion auto-promotion
+│   ├── early_stopping_watchdog.py          # Auto-promotion & checkpoint watchdog
 │   ├── background_eval_worker.py           # Background evaluation daemon
-│   └── simulation/                         # MuJoCo XML models, URDFs, and meshes
-│       ├── scene_cube.xml                  # Main MuJoCo simulation scene
-│       ├── gripper_only.xml                # Delto-3F kinematic definition
-│       └── meshes/                         # STL / OBJ geometric collision meshes
-├── scripts/                                # Evaluation & documentation scripts
-│   ├── generate_documentation_pdf.py       # Chrome Headless KaTeX PDF generator script
-│   └── run_eval_demo.sh                    # Interactive CLI benchmark launcher
-└── docs/                                   # Supplementary guides & references
-    ├── teleop_pipeline_guide.md            # Teleoperation & collection reference
-    └── commands.txt                        # Command reference cheat-sheet
+│   ├── diagnose_failures.py                # Failure mode diagnostic profiler
+│   ├── simulation/                         # MuJoCo XML kinematics, URDFs, meshes
+│   │   ├── __init__.py                     # Package initializer
+│   │   ├── scene_cube.xml                  # Main MuJoCo simulation environment
+│   │   ├── gripper_only.xml                # Delto-3F kinematic definition
+│   │   ├── gripper_only.urdf               # Kinematic URDF definition
+│   │   └── meshes/                         # Collision & visual STL meshes
+│   └── teleop/                             # Vision teleoperation & dataset pipeline
+│       ├── __init__.py                     # Package initializer
+│       ├── collect_data.py                 # Teleop data recorder with HER labeling
+│       ├── preprocess_data.py              # Dead-time trimmer & velocity filter
+│       ├── replay_data.py                  # Demonstration replay visualizer
+│       ├── inspect_data.py                 # Dataset quality & jitter auditor
+│       ├── webcam_aruco_tracker.py         # Threaded zero-latency ArUco tracker
+│       ├── camera_calib.npz                # Optical camera calibration matrix
+│       └── delto_3f_retarget.yml           # Inverse Kinematics joint retargeting
+│
+└── [Legacy Compatibility Symlinks]
+    ├── best_model -> models                # Backward compatibility symlink
+    ├── EVAL -> evaluation/reports          # Backward compatibility symlink
+    └── data_processed -> data/processed    # Backward compatibility symlink
 ```
 
 ---
@@ -243,8 +288,8 @@ cd IN_HAND_MANIPULATION-
 conda create -n delto_manipulation python=3.11 -y
 conda activate delto_manipulation
 
-# Install core dependencies
-pip install torch torchvision numpy scipy mujoco matplotlib pyyaml markdown
+# Install core dependencies from requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 2. Interactive 3D Visual Demonstration
@@ -253,18 +298,18 @@ Run the interactive MuJoCo passive 3D viewer to watch the policy perform live in
 
 ```bash
 # Option A: Nominal Clean Presentation Model (Ideal kinematics for video demonstration)
-python in_hand_manipulation/evaluate.py \
-    --checkpoint best_model/best_model_clean.pth \
+python3 in_hand_manipulation/evaluate.py \
+    --checkpoint models/best_model_clean.pth \
     --render \
     --hold_time 1.5
 
 # Option B: Sim-to-Real Domain Randomization Champion (With live latency, sensor jitter, and EMA filtering)
-python in_hand_manipulation/evaluate_dr.py \
-    --checkpoint best_model/best_model_with_dr.pth \
+python3 in_hand_manipulation/evaluate_dr.py \
+    --checkpoint models/best_model_with_dr.pth \
     --render \
     --smooth_alpha 0.50
 ```
-*(Note: `best_model/best_model.pth` is maintained as an active backward-compatible alias to `best_model_with_dr.pth`).*
+*(Note: `models/best_model.pth` and `best_model/best_model.pth` are maintained as active backward-compatible aliases to `best_model_with_dr.pth`).*
 
 Alternatively, use the interactive one-click launcher:
 ```bash
@@ -276,23 +321,28 @@ bash scripts/run_eval_demo.sh
 Execute the full 600-episode canonical benchmark across 16 parallel CPU workers:
 
 ```bash
-python in_hand_manipulation/evaluate_dr.py \
-    --checkpoint best_model/best_model_with_dr.pth \
+python3 in_hand_manipulation/evaluate_dr.py \
+    --checkpoint models/best_model_with_dr.pth \
     --episodes_per_range 100 \
     --num_workers 16 \
     --smooth_alpha 0.50 \
     --epsilon_ratio 0.10 \
-    --report_file EVAL/EVALUATION_DR_REPORT.md
+    --report_file evaluation/reports/EVALUATION_DR_REPORT.md
 ```
 *(Executes all 600 episodes in ~40 seconds at ~15 episodes/sec).*
+
+Or run the automated batch script:
+```bash
+bash scripts/run_benchmark.sh
+```
 
 ### 4. Training from Scratch or Fine-Tuning
 
 Launch distributed PPO fine-tuning with the early-stopping watchdog:
 
 ```bash
-python in_hand_manipulation/train_ppo.py \
-    --pretrained_actor best_model/best_model_with_dr.pth \
+python3 in_hand_manipulation/train_ppo.py \
+    --pretrained_actor models/best_model_with_dr.pth \
     --num_envs 16 \
     --smooth_alpha 0.50 \
     --sim2real_dr \
@@ -300,7 +350,7 @@ python in_hand_manipulation/train_ppo.py \
     --vision_delay_max 2 \
     --obs_noise_scale 0.80 \
     --dr_ratio 0.30 \
-    --output_dir fine_tune_training/my_experiment
+    --output_dir experiments/dr_finetune_run1
 ```
 
 ---
@@ -316,6 +366,8 @@ Before connecting to the physical Delto-3F gripper via USB/CAN bus, ensure the f
 
 ## 📜 Documentation & License
 
-- **Technical Report**: Complete 55-page PDF documentation is provided at [**`IN_HAND_MANIPULATION_DOCUMENTATION.pdf`**](IN_HAND_MANIPULATION_DOCUMENTATION.pdf).
+- **Technical Report**: Complete 55-page publication monograph is provided at [**`docs/IN_HAND_MANIPULATION_DOCUMENTATION.pdf`**](docs/IN_HAND_MANIPULATION_DOCUMENTATION.pdf).
+- **Engineering Monograph**: Exhaustive 57-section implementation notes in [**`docs/learning.md`**](docs/learning.md).
+- **Hardware Teleoperation**: Camera and ArUco setup guide in [**`docs/teleop_pipeline_guide.md`**](docs/teleop_pipeline_guide.md).
 - **License**: Released under the [MIT License](LICENSE).
 
