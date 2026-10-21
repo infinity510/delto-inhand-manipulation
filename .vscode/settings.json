@@ -1,9 +1,28 @@
 {
     "ROS2.distro": "jazzy",
+    "python.defaultInterpreterPath": "/home/akshat/micromamba/bin/python3",
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingModuleSource": "none",
+        "reportMissingTypeStubs": "none",
+        "reportUndefinedVariable": "warning",
+        "reportGeneralTypeIssues": "none",
+        "reportOptionalMemberAccess": "none",
+        "reportOptionalSubscript": "none",
+        "reportPrivateImportUsage": "none",
+        "reportAttributeAccessIssue": "none",
+        "reportArgumentType": "none",
+        "reportCallIssue": "none"
+    },
     "python.autoComplete.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/src",
         "/opt/ros/jazzy/lib/python3.12/site-packages"
     ],
     "python.analysis.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/src",
         "/opt/ros/jazzy/lib/python3.12/site-packages"
     ]
 }
