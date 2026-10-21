@@ -19,7 +19,7 @@ This project focuses on **Dexterous In-Hand Manipulation**, specifically targeti
 ## 2. Directory Structure
 
 ```
-DC_PROJECT/
+delto-inhand-manipulation/
 │
 ├── data/                                  # Demonstration trajectories
 │   ├── raw/                               # Raw recorded HDF5 demonstration episodes

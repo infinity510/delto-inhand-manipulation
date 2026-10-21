@@ -757,7 +757,7 @@ def main():
     parser.add_argument(
         "--checkpoint",
         type=str,
-        default=os.path.join(PROJECT_ROOT, "best_model", "best_model.pth"),
+        default=os.path.join(PROJECT_ROOT, "models", "best_model.pth"),
         help="Path to actor checkpoint (.pth)",
     )
     parser.add_argument(
@@ -838,12 +838,12 @@ def main():
         choices=["shuffle", "random", "sequential"],
         help="Object sampling mode across episodes: 'shuffle' (randomized stratified permutation, default)",
     )
-    default_report = os.path.join(PROJECT_ROOT, "EVAL", "EVALUATION_DR_REPORT.md") if os.path.isdir(os.path.join(PROJECT_ROOT, "EVAL")) else "EVALUATION_DR_REPORT.md"
+    default_report = os.path.join(PROJECT_ROOT, "evaluation", "reports", "EVALUATION_DR_REPORT.md") if os.path.isdir(os.path.join(PROJECT_ROOT, "evaluation", "reports")) else "EVALUATION_DR_REPORT.md"
     parser.add_argument(
         "--report_file",
         type=str,
         default=default_report,
-        help="Output report markdown file path (default: EVAL/EVALUATION_DR_REPORT.md)",
+        help="Output report markdown file path (default: evaluation/reports/EVALUATION_DR_REPORT.md)",
     )
     parser.add_argument(
         "--seed",

@@ -1,4 +1,4 @@
-# Autonomous In-Hand Dexterous Manipulation on the Delto-3F Gripper
+# DeltoInHand: Autonomous In-Hand Dexterous Manipulation on the Delto-3F Gripper
 
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch 2.x](https://img.shields.io/badge/PyTorch-2.x-EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
@@ -264,11 +264,6 @@ Range 2 (40° - 90° Large Dynamic In-Hand Gaiting):
 │       ├── webcam_aruco_tracker.py         # Threaded zero-latency ArUco tracker
 │       ├── camera_calib.npz                # Optical camera calibration matrix
 │       └── delto_3f_retarget.yml           # Inverse Kinematics joint retargeting
-│
-└── [Legacy Compatibility Symlinks]
-    ├── best_model -> models                # Backward compatibility symlink
-    ├── EVAL -> evaluation/reports          # Backward compatibility symlink
-    └── data_processed -> data/processed    # Backward compatibility symlink
 ```
 
 ---
@@ -281,8 +276,8 @@ Create an isolated Python 3.11 environment using `conda`, `micromamba`, or `venv
 
 ```bash
 # Clone the repository
-git clone https://github.com/infinity510/IN_HAND_MANIPULATION-.git
-cd IN_HAND_MANIPULATION-
+git clone https://github.com/infinity510/delto-inhand-manipulation.git
+cd delto-inhand-manipulation
 
 # Create virtual environment
 conda create -n delto_manipulation python=3.11 -y
@@ -309,7 +304,7 @@ python3 in_hand_manipulation/evaluate_dr.py \
     --render \
     --smooth_alpha 0.50
 ```
-*(Note: `models/best_model.pth` and `best_model/best_model.pth` are maintained as active backward-compatible aliases to `best_model_with_dr.pth`).*
+*(Note: `models/best_model.pth` is maintained as an active canonical pointer to `best_model_with_dr.pth`).*
 
 Alternatively, use the interactive one-click launcher:
 ```bash

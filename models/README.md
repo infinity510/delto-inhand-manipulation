@@ -6,7 +6,7 @@ This directory contains the primary champion checkpoints for autonomous in-hand 
 
 ## 1. Ideal Case Champion: `best_model_clean.pth`
 
-- **Filename**: [`best_model_clean.pth`](best_model_clean.pth) (also accessible via `best_model/best_model_clean.pth`)
+- **Filename**: [`best_model_clean.pth`](best_model_clean.pth)
 - **Role**: Ideal / Nominal Physics baseline.
 - **Physical Environment**: Zero observation noise, zero sensor latency, nominal silicone friction, nominal geometry.
 - **Primary Use Case**: High-fidelity visual demonstrations, video captures, academic presentation figures, and nominal kinematics baseline.
@@ -16,8 +16,8 @@ This directory contains the primary champion checkpoints for autonomous in-hand 
 
 ## 2. Sim-to-Real Domain Randomization Champion: `best_model_with_dr.pth`
 
-- **Primary Checkpoint**: [`best_model_with_dr.pth`](best_model_with_dr.pth) (also accessible via `best_model/best_model_with_dr.pth`)
-- **Standardized Aliases (Hardlinked)**: `best_model.pth` | `best_model_withDR.pth` | `best_mode_withDRl.pth`
+- **Primary Checkpoint**: [`best_model_with_dr.pth`](best_model_with_dr.pth)
+- **Canonical Alias**: [`best_model.pth`](best_model.pth)
 - **Role**: Robust Sim-to-Real Domain Randomization Champion.
 - **Training Origin**: Stage 15 Precision Climax (`stage15_precision_climax_70plus`), **Iteration 500** (promoted by the Early-Stopping Watchdog).
 - **Action Rate Smoothing**: First-order exponential low-pass filter ($\alpha = 0.50$) on 50 Hz control loop ($20\text{ ms}$ control timesteps), eliminating motor jitter and reducing peak joint jerk by $>65\%$.

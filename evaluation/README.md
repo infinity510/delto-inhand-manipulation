@@ -10,15 +10,10 @@ This directory houses the comprehensive performance evaluations, benchmark repor
 evaluation/
 ├── README.md               # Benchmark documentation & protocol specifications
 └── reports/                # Standardized evaluation markdown reports
-    ├── EVALUATION_DR_REPORT.md             # Primary Sim-to-Real Domain Randomization report
-    ├── EVALUATION_REPORT.md                # Nominal clean baseline benchmark report
-    ├── EVALUATION_DR_FULL_REPORT.md        # Extended multi-seed DR evaluation report
-    ├── EVALUATION_DR_REPORT_CLEAN.md       # Baseline presentation comparison report
-    ├── EVALUATION_DR_REPORT_PREV_PEAK.md   # Prior peak champion comparison
+    ├── EVALUATION_DR_REPORT.md             # Primary Sim-to-Real Domain Randomization report (600 episodes)
+    ├── EVALUATION_REPORT.md                # Nominal clean baseline benchmark report (600 episodes)
     └── OVERNIGHT_PROGRESS_REPORT.md        # Comprehensive multi-stage curriculum progression
 ```
-
-> **Note**: For backward compatibility with legacy command flags (`--report_file EVAL/...`), `EVAL` at the repository root is maintained as an active symlink pointing to `evaluation/reports`.
 
 ---
 

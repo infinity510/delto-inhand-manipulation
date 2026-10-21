@@ -187,11 +187,11 @@ The robotics literature often evaluates orientation tasks using loose absolute e
 * Implemented `in_hand_manipulation/background_eval_worker.py`:
   * Continuously monitors training checkpoints in the background.
   * Evaluates candidates across randomized multi-worker episodes.
-  * **Strict Rollback Guard**: A newly trained checkpoint is **only** promoted to `best_model/best_model.pth` if its composite benchmark score strictly surpasses the reigning champion. Any degraded checkpoint is quarantined, protecting production assets.
+  * **Strict Rollback Guard**: A newly trained checkpoint is **only** promoted to `models/best_model.pth` if its composite benchmark score strictly surpasses the reigning champion. Any degraded checkpoint is quarantined, protecting production assets.
 
 ### 6.2 Checksum Verification
 * Reigning Global Champion:
-  * **File**: `best_model/best_model.pth`
+  * **File**: `models/best_model.pth`
   * **MD5**: `7db0136c99d99575807b93e9c3bd0d4a`
   * **Size**: `10,087,735 bytes`
   * **Training Source**: Stage 3M (Balanced, stabilized friction curriculum).
@@ -205,7 +205,7 @@ To run the interactive 3D demonstration with the professor featuring the **1.5-s
 
 ```bash
 python3 in_hand_manipulation/evaluate.py \
-  --checkpoint best_model/best_model.pth \
+  --checkpoint models/best_model.pth \
   --render \
   --hold_time 1.5 \
   --max_goals 1 \
@@ -219,7 +219,7 @@ To run fast parallel evaluation across all objects and angular ranges using 16 p
 
 ```bash
 python3 in_hand_manipulation/evaluate.py \
-  --checkpoint best_model/best_model.pth \
+  --checkpoint models/best_model.pth \
   --num_workers 16 \
   --episodes_per_range 10 \
   --max_goals 1
@@ -2062,15 +2062,15 @@ At Iteration 500 of Stage 15 (`stage15_precision_climax_70plus`), the synergized
 | **Range 2 Rotational Closure** | `60.6%` | **`64.1%`** | **$+3.5\%$** |
 
 ### 2. Canonical 600-Episode Sim-to-Real Benchmark Verification
-Verified on `best_model/best_model.pth` across 600 full domain randomization episodes (16 parallel workers, 41.0 seconds execution):
+Verified on `models/best_model.pth` across 600 full domain randomization episodes (16 parallel workers, 41.0 seconds execution):
 - **Range 1 ($10^\circ \text{--} 40^\circ$)**: **`79.7%` Success**, **`86.8%` Closure**, **`94.3%` Retention (only 5.7% drops)**, **`10.2°` mean final error**.
   - **Cylinder**: **`85.0%` Success**, **`91.6%` Closure**, **`98.0%` Retention (2% drops)**!
   - **Cuboid**: **`82.0%` Success**, **`88.0%` Closure**, **`94.0%` Retention**!
   - **Cube**: **`72.0%` Success**, **`80.7%` Closure**, **`91.0%` Retention**!
 - **Grand Sim-to-Real Success Rate**: **`62.5%`** across all ranges and all shapes under full hardware delay ($0\text{--}20\text{ ms}$), vision latency ($20\text{--}40\text{ ms}$), sensor jitter ($0.80$), and silicone friction variations ($\mu \in [2.1, 3.9]$).
 - **Zero Hardware Intrusions**: $0.0\%$ palm collisions, peak joint torque $\le 5.48\text{ N}\cdot\text{m}$.
-- **Production Status**: Promoted to global production champion at `best_model/best_model_with_dr.pth` (with standardized hardlink aliases `best_model.pth`, `best_model_withDR.pth`, and `best_mode_withDRl.pth`).
-- **Ideal Case Baseline**: Preserved at `best_model/best_model_clean.pth` (zero-noise, nominal physics baseline for presentation recordings).
+- **Production Status**: Promoted to global production champion at `models/best_model_with_dr.pth` (with canonical pointer `models/best_model.pth`).
+- **Ideal Case Baseline**: Preserved at `models/best_model_clean.pth` (zero-noise, nominal physics baseline for presentation recordings).
 
 
 

@@ -103,7 +103,7 @@ def promote_champion(watch_dir: str, peak_iter: int, peak_ckpt: str, peak_metric
     ret = peak_metrics.get("retention_rate", 0.0) * 100
 
     # Promote to global champion repository if score strictly exceeds reigning baseline
-    champion_dir = os.path.join(PROJECT_ROOT, "best_model")
+    champion_dir = os.path.join(PROJECT_ROOT, "models")
     if score > global_baseline and os.path.exists(champion_dir):
         global_target = os.path.join(champion_dir, "best_model.pth")
         shutil.copy2(peak_ckpt, global_target)
@@ -156,7 +156,7 @@ def write_stop_report(watch_dir: str, peak_iter: int, peak_metrics: dict, trigge
             f.write(f"| Iteration {it:05d} | {succ:5.1f}% | {clos:5.1f}% | {ret:5.1f}% | **`{sc:.4f}`** | {status} |\n")
         f.write("\n## 3. Preservation & Next Steps\n\n")
         f.write(f"- Peak actor model locked and preserved at: `ppo_final_champion_actor.pth`\n")
-        f.write(f"- Global production model `best_model/best_model.pth` safely synchronized with the peak model.\n")
+        f.write(f"- Global production model `models/best_model.pth` safely synchronized with the peak model.\n")
     print(f"[Watchdog Report] Wrote early stopping diagnosis report to: {report_path}")
 
 

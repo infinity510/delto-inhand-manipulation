@@ -2213,7 +2213,7 @@ class PPOFineTuner:
                                         self.save_checkpoint(os.path.join(output_dir, "ppo_latest_actor.pth"), iteration, rollout_metrics)
                                         self.save_checkpoint(os.path.join(output_dir, "unified_curriculum_golden.pth"), iteration, rollout_metrics)
                                         self.save_checkpoint(os.path.join(output_dir, f"{os.path.basename(output_dir)}_golden.pth"), iteration, rollout_metrics)
-                                        champ_dir = os.path.join(PROJECT_ROOT, "best_model")
+                                        champ_dir = os.path.join(PROJECT_ROOT, "models")
                                         if os.path.exists(champ_dir):
                                             try:
                                                 self.save_checkpoint(os.path.join(champ_dir, "best_model.pth"), iteration, rollout_metrics)

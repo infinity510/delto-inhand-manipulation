@@ -685,7 +685,7 @@ def main():
     parser.add_argument(
         "--checkpoint",
         type=str,
-        default=os.path.join(PROJECT_ROOT, "best_model", "best_model.pth"),
+        default=os.path.join(PROJECT_ROOT, "models", "best_model.pth"),
         help="Path to actor checkpoint (.pth)",
     )
     parser.add_argument(

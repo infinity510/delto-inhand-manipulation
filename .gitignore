@@ -429,7 +429,16 @@ FodyWeavers.xsd
 *.msp
 __pycache__/
 *.pyc
-.vscode/
+*.pyo
+*.pyd
+
+# VS Code & IDE Caches
+.vscode/*
+!.vscode/settings.json
+!.vscode/c_cpp_properties.json
+*.db
+*.db-*
+*.lock
 
 # Machine Learning Checkpoints, Weights & Telemetry
 *.pth
@@ -441,18 +450,16 @@ checkpoints_*/
 checkpoints*
 stage2*/
 fine_tune_training/
+experiments/
 metrics.jsonl
 *.jsonl
 !in_hand_manipulation/bc_actor_checkpoint.pth
 !models/best_model.pth
 !models/best_model_with_dr.pth
 !models/best_model_clean.pth
-!best_model/best_model.pth
-!best_model/best_model_with_dr.pth
-!best_model/best_model_clean.pth
 
-# Local Environment & Compatibility Symlinks
+# Local Environment Files
 .env
-IN_HAND_MANIPULATION-
+.env.local
 
 

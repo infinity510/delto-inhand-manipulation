@@ -272,13 +272,13 @@ def main():
     parser.add_argument("--delete_checkpoints", action="store_true", default=False, help="Delete intermediate milestone checkpoints after evaluation")
     parser.add_argument("--stop_flag", type=str, default="", help="Stop flag file path indicating training has completed")
     parser.add_argument("--best_output", type=str, default="", help="Destination path for best actor checkpoint")
-    parser.add_argument("--update_global_best", action="store_true", help="Also promote to global best_model/best_model.pth")
+    parser.add_argument("--update_global_best", action="store_true", help="Also promote to global models/best_model.pth")
     parser.add_argument("--sim2real_dr", action="store_true", help="Enable sim-to-real domain randomization during evaluation")
     parser.add_argument("--action_delay_max", type=int, default=1, help="Max action delay steps for DR evaluation (default: 1 -> 20ms)")
     parser.add_argument("--vision_delay_max", type=int, default=2, help="Max ArUco vision latency steps (default: 2 -> 40ms)")
     parser.add_argument("--obs_noise_scale", type=float, default=0.80, help="Observation noise scale factor (default: 0.80)")
     parser.add_argument("--dr_ratio", type=float, default=0.30, help="Domain randomization ratio (default: 0.30)")
-    parser.add_argument("--min_promote_score", type=float, default=0.7050, help="Minimum benchmark score required to promote to best_model/best_model.pth (default: 0.7050)")
+    parser.add_argument("--min_promote_score", type=float, default=0.7050, help="Minimum benchmark score required to promote to models/best_model.pth (default: 0.7050)")
     args = parser.parse_args()
     
     watch_dir = os.path.abspath(args.watch_dir)
@@ -304,7 +304,7 @@ def main():
     # If a best model already exists, initialize baseline from local or global champion
     target_baseline = best_output
     if not os.path.exists(target_baseline) and args.update_global_best:
-        global_champ = os.path.join(PROJECT_ROOT, "best_model", "best_model.pth")
+        global_champ = os.path.join(PROJECT_ROOT, "models", "best_model.pth")
         if os.path.exists(global_champ):
             target_baseline = global_champ
             
@@ -443,7 +443,7 @@ def main():
                             best_score = score
                             best_iter = it
                             shutil.copy2(ckpt_file, best_output)
-                            champion_dir = os.path.join(PROJECT_ROOT, "best_model")
+                            champion_dir = os.path.join(PROJECT_ROOT, "models")
                             if args.update_global_best and os.path.exists(champion_dir) and score >= args.min_promote_score:
                                 try:
                                     champion_path = os.path.join(champion_dir, "best_model.pth")
@@ -481,7 +481,7 @@ def main():
                     best_iter = it
                     shutil.copy2(ckpt_file, best_output)
                     # Automatically update global champion repository
-                    champion_dir = os.path.join(PROJECT_ROOT, "best_model")
+                    champion_dir = os.path.join(PROJECT_ROOT, "models")
                     if args.update_global_best and os.path.exists(champion_dir) and score >= args.min_promote_score:
                         try:
                             champion_path = os.path.join(champion_dir, "best_model.pth")

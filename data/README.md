@@ -18,8 +18,6 @@ data/
     └── cylinder_*.hdf5
 ```
 
-> **Note**: For backward compatibility with legacy scripts, `data_processed` at project root is maintained as an active symlink pointing directly to `data/processed`.
-
 ---
 
 ## Dataset Schema & Modalities
