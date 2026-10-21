@@ -407,18 +407,9 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# VS Code files for those working on multiple tools
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
-
-# Local History for Visual Studio Code
+# Visual Studio Code
+.vscode/
 .history/
-
-# Built Visual Studio Code Extensions
 *.vsix
 
 # Windows Installer files from build outputs
@@ -433,9 +424,6 @@ __pycache__/
 *.pyd
 
 # VS Code & IDE Caches
-.vscode/*
-!.vscode/settings.json
-!.vscode/c_cpp_properties.json
 *.db
 *.db-*
 *.lock

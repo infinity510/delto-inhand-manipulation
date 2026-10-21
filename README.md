@@ -135,16 +135,16 @@ $$R_t = r_{\text{closure}} + r_{\text{progress}} + r_{\text{precision}} + r_{\te
   $$r_{\text{progress}} = \begin{cases} w_{\text{progress}} \cdot \Delta d_\theta \cdot \left(1 + 2.5 c_t^2 + 2.0 e^{-d_\theta/0.35}\right) & \text{if } \Delta d_\theta \ge 0 \\ 0.25 \cdot w_{\text{progress}} \cdot \Delta d_\theta & \text{if } \Delta d_\theta < 0 \end{cases}$$
   Damping negative progress by $0.25\times$ permits dynamic finger gaiting transitions without punitive drops.
 - **Multi-Scale Precision Attractor ($r_{\text{precision}}$)**:
-  $$r_{\text{precision}} = 4.0 e^{-\min(4, e_{\text{rel}}/0.15)} + w_{\text{prec}} e^{-0.5(e_{\text{rel}}/\epsilon)^2} + 8.0 \max\left(0, \frac{2\epsilon - e_{\text{rel}}}{2\epsilon}\right) + 12.0 \max\left(0, \frac{1.5\epsilon - e_{\text{rel}}}{0.5\epsilon}\right) + r_{\text{sub\_tol}}$$
+  $$r_{\text{precision}} = 4.0 e^{-\min(4, e_{\text{rel}}/0.15)} + w_{\text{prec}} e^{-0.5(e_{\text{rel}}/\epsilon)^2} + 8.0 \max\left(0, \frac{2\epsilon - e_{\text{rel}}}{2\epsilon}\right) + 12.0 \max\left(0, \frac{1.5\epsilon - e_{\text{rel}}}{0.5\epsilon}\right) + r_{\text{sub-tol}}$$
   The $+12.0$ steep approach ramp ($15\% \to 10\%$) eliminates the $12\%$ hovering plateau, pulling the object into the goal basin.
 - **Object-Adaptive Cradle Bonus ($r_{\text{cradle}}$)**:
   $$r_{\text{cradle}} = 0.55 \cdot \exp\left( - \left(\frac{d_{xy}}{0.04}\right)^2 - \left(\frac{|z_{\text{obj}} - z^*|}{0.03}\right)^2 \right)$$
   where $z^* = 0.065\text{ m}$ for the Cube and $z^* = 0.095\text{ m}$ for Cylinder/Cuboid.
 
 ### 2. Biomechanical Hardware Penalties
-- **Distal Anti-Clenching Penalty**: $r_{\text{flat\_shelf}} = 2.0 \sum_{i=1}^3 \max(0, (q_{m3, i} + q_{m4, i}) - 2.85\text{ rad})^2$.
-- **Fingertip Palm Clearance Floor**: $r_{\text{palm\_clearance}} = 25.0 \max(0, 0.012\text{ m} - \min z_{\text{tip}})^2$.
-- **Action Rate Regularization**: $r_{\text{action\_rate}} = 0.05 \|\mathbf{a}_t - \mathbf{a}_{t-1}\|_2^2$.
+- **Distal Anti-Clenching Penalty**: $r_{\text{anti-clench}} = 2.0 \sum_{i=1}^3 \max(0, (q_{m3, i} + q_{m4, i}) - 2.85\text{ rad})^2$.
+- **Fingertip Palm Clearance Floor**: $r_{\text{palm-clearance}} = 25.0 \max(0, 0.012\text{ m} - \min z_{\text{tip}})^2$.
+- **Action Rate Regularization**: $r_{\text{action-rate}} = 0.05 \|\mathbf{a}_t - \mathbf{a}_{t-1}\|_2^2$.
 - **Dynamic Motion-Gated Alive Reward**: Alive reward ($+0.80$) drops to $0.0$ if $\|\boldsymbol{\omega}_{\text{obj}}\| < 0.04\text{ rad/s}$ outside goal tolerance, preventing passive palm camping.
 
 ---

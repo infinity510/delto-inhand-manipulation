@@ -107,7 +107,7 @@ The policy manipulates three distinct object morphologies, each presenting uniqu
   1. **Dynamic Angular Velocity Reward**: Reward is strictly tied to real-time angular progress:
      $$r_{\text{progress}} = w_{\text{progress}} \cdot (\theta_{\text{prev}} - \theta_{\text{cur}})$$
      A stationary grasp earns exactly $0.0$ progress reward.
-  2. **Step Time Penalty**: Injected $w_{\text{step\_penalty}} = 0.04$ per step, ensuring that stalling accumulates a net negative return.
+  2. **Step Time Penalty**: Injected $w_{\text{step-penalty}} = 0.04$ per step, ensuring that stalling accumulates a net negative return.
   3. **High Terminal Success Payoff**: Set $w_{\text{success}} = 60.0$, making goal attainment the dominant incentive.
 
 ---
@@ -581,12 +581,12 @@ python3 src/training/train_ppo.py \
 
 ### The Solution:
 1. **Angle-Proportional Base Budgeting:**
-   $$\text{max\_steps} = \text{base\_steps} + (\text{steps\_per\_radian} \times \theta_{\text{initial}})$$
+   $$\text{max-steps} = \text{base-steps} + (\text{steps-per-radian} \times \theta_{\text{initial}})$$
    - Small $15^\circ$ rotation: $\approx 300\text{ steps}$ ($6.0\text{s}$).
    - Medium $45^\circ$ rotation: $\approx 410\text{ steps}$ ($8.2\text{s}$).
    - Large $80^\circ$ rotation: $\approx 530\text{ steps}$ ($10.6\text{s}$).
 2. **Success Time Extension (OpenAI Dactyl Standard):**
-   $$\text{current\_max\_steps} = \min(\text{max\_steps\_cap}, \text{current\_max\_steps} + \mathbf{150\text{ bonus steps}})$$
+   $$\text{current-max-steps} = \min(\text{max-steps-cap}, \text{current-max-steps} + \mathbf{150\text{ bonus steps}})$$
    - Proficient policies that reach goals earn $+150$ extra steps ($+3.0\text{s}$) per goal, unlocking continuous multi-goal chaining (up to an 800-step / 16.0s ceiling).
    - Failing policies terminate promptly at ~300 steps, preserving training throughput.
 
@@ -611,9 +611,9 @@ python3 src/training/train_ppo.py \
 
 #### 2. The Binary Absorption Accounting Artifact
 - In `train_ppo.py`, an episode ending is binary:
-  $$\text{terminated} = \text{is\_dropped}, \quad \text{truncated} = (\text{step} \ge \text{max\_steps})$$
+  $$\text{terminated} = \text{is-dropped}, \quad \text{truncated} = (\text{step} \ge \text{max-steps})$$
 - If the robot manipulates the cube flawlessly, scores **2 or 3 consecutive goals**, collects **$+1,100$ episode return**, and survives until **step 580 (11.6 seconds)** before the cube slips, `train_ppo.py` records:
-  $$\text{recent\_drops.append}(1.0)$$
+  $$\text{recent-drops.append}(1.0)$$
 - Telemetry logs this triumphant multi-goal episode as a **100% drop**! The metric does not differentiate between dropping at step 10 vs. slipping at step 580 after achieving 3 goals.
 
 #### 3. Object-Geometry Disparity (Cylinder vs. Cube vs. Cuboid)
@@ -729,7 +729,7 @@ The policy achieved an immediate and decisive performance breakthrough:
 
 ### The Problem with Binary Success Rate Selection:
 Previously, model checkpointing in PPO was governed solely by binary rollout success rate:
-$$\text{Save Checkpoint if } \text{success\_rate} > \text{best\_success\_rate}$$
+$$\text{Save Checkpoint if } \text{success-rate} > \text{best-success-rate}$$
 
 This created two critical failure modes:
 1. **The Step-Function Quantization Blind Spot:** A binary threshold treats $14.1^\circ$ error as a success and $14.2^\circ$ as complete failure. If Model A scores $30\%$ success with $55^\circ$ mean angular error, and Model B scores $26\%$ success with **$22^\circ$ mean angular error**, the old system wrongly preferred Model A despite Model B having over $2.5\times$ better rotational precision.
@@ -809,7 +809,7 @@ An absolute threshold $\epsilon = 20^\circ$ evaluates all goals uniformly regard
 
 ### 3. The New Proportional 10% Evaluation Law (Evaluation Only):
 To rigorously assess genuine rotational accuracy without distorting RL training rewards, evaluation scripts now calculate a dynamic, angle-proportional success threshold per episode:
-$$\epsilon_{\text{eval}}(\theta) = \max\left(0.015\text{ rad } (0.86^\circ), \, \text{success\_ratio} \times \theta_{\text{actual}}\right), \quad \text{default } \text{success\_ratio} = 0.10$$
+$$\epsilon_{\text{eval}}(\theta) = \max\left(0.015\text{ rad } (0.86^\circ), \, \text{success-ratio} \times \theta_{\text{actual}}\right), \quad \text{default } \text{success-ratio} = 0.10$$
 
 | Required Rotation ($\theta_{\text{actual}}$) | Success Threshold ($\le 10\%$) | Accuracy Required |
 | :---: | :---: | :---: |
@@ -1335,14 +1335,14 @@ In continuous goal resampling environments (OpenAI Dactyl protocol), when a poli
 
 To align the automated stopping decision with true competence:
 - **Pre-Goal Drop**:
-  $$\text{dropped\_before\_success} = \text{bool}(\text{raw\_dropped} \land (\text{goals\_achieved} == 0))$$
+  $$\text{dropped-before-success} = \text{bool}(\text{raw-dropped} \land (\text{goals-achieved} == 0))$$
 - **Pre-Goal Retention**:
-  $$\text{pre\_goal\_retention} = 1.0 - \frac{1}{N}\sum_{i=1}^N \text{dropped\_before\_success}_i$$
+  $$\text{pre-goal-retention} = 1.0 - \frac{1}{N}\sum_{i=1}^N \text{dropped-before-success}_i$$
 - **Stopping Rule**:
   The entire unified run terminates if:
   1. **Total iterations reach 70,000**, OR
   2. The background 500-episode benchmark confirms:
-     $$\epsilon_{\text{ratio}} \le 0.10 \quad \land \quad \text{success\_rate} \ge 70.0\% \quad \land \quad \text{pre\_goal\_retention} \ge 70.0\%$$
+     $$\epsilon_{\text{ratio}} \le 0.10 \quad \land \quad \text{success-rate} \ge 70.0\% \quad \land \quad \text{pre-goal-retention} \ge 70.0\%$$
 
 ---
 
@@ -1477,7 +1477,7 @@ Between Iteration 20,700 and Iteration 30,300 of the continuous run:
 
 ### 3. Mathematical Reward Recalibration:
 - **Pure Angular Progress**: Replaced static posture reward with dynamic movement velocity $\Delta \theta = \theta_{\text{prev}} - \theta_{\text{cur}}$. Motionless holding yields exactly $0.0$ reward.
-- **Step Time Cost**: Injected $w_{\text{step\_penalty}} = 0.04$ per step, so stalling now incurs a negative return over time.
+- **Step Time Cost**: Injected $w_{\text{step-penalty}} = 0.04$ per step, so stalling now incurs a negative return over time.
 - **Boosted Terminal Goal Bonus**: Raised $w_4 = 60.0$ so reaching the goal provides the dominant payoff.
 - **Initial Weights**: Re-seeded directly from `models/best_model.pth` ($63.3\%$ baseline) running toward the 70,000 global cumulative iteration cap.
 
@@ -1715,7 +1715,7 @@ Integrated into `DeltoInHandManipulationEnv` (`src/training/train_ppo.py`):
 
 ### 3. Progressive Sub-Tolerance Super-Precision Reward
 To actively encourage driving orientation error below the $10\%$ tolerance threshold towards $5\%$ and $0\%$, formulated a progressive super-precision reward in `step()`:
-$$\Delta r_{\text{super\_precision}} = 8.0 \cdot \left(\frac{\epsilon_{\text{ratio}} - \text{rel\_error}}{\epsilon_{\text{ratio}}}\right)^{1.5} \quad \text{for } \text{rel\_error} < \epsilon_{\text{ratio}}$$
+$$\Delta r_{\text{super-precision}} = 8.0 \cdot \left(\frac{\epsilon_{\text{ratio}} - \text{rel-error}}{\epsilon_{\text{ratio}}}\right)^{1.5} \quad \text{for } \text{rel-error} < \epsilon_{\text{ratio}}$$
 - At $10\%$ error: $\Delta r = +0.0$
 - At $5\%$ error: $\Delta r = +2.83$ per step
 - At $2\%$ error: $\Delta r = +5.72$ per step
@@ -1895,7 +1895,7 @@ For each finger $i \in \{1, 2, 3\}$, the total distal flexion is monitored acros
 $$f_{\text{distal}, i} = q_{m3, i} + q_{m4, i}$$
 Excess curl beyond the safe threshold $\theta_{\text{safe}} = 2.85\text{ rad} \approx 163^\circ$ is penalized quadratically:
 $$\Delta_{\text{hyperflex}, i} = \max(0, f_{\text{distal}, i} - 2.85)$$
-$$r_{\text{flat\_shelf}} = - 2.0 \cdot \sum_{i=1}^3 \Delta_{\text{hyperflex}, i}^2$$
+$$r_{\text{flat-shelf}} = - 2.0 \cdot \sum_{i=1}^3 \Delta_{\text{hyperflex}, i}^2$$
 This permits firm grasping of thin objects while strictly forbidding clenched-fist palm tucks.
 
 ```python
@@ -1979,7 +1979,7 @@ flowchart LR
    This adds up to $+12.0$ points of reward exclusively over the critical $15\% \to 10\%$ error interval, completely eliminating the $12\%$ hovering plateau.
 3. **Progressive Sub-Tolerance Super-Precision Reward**:
    Once orientation error drops strictly below the $10\%$ tolerance ($e_{\text{rel}} < \epsilon$):
-   $$r_{\text{sub\_tol}} = 10.0 \cdot \left(\frac{\epsilon - e_{\text{rel}}}{\epsilon}\right)^{1.5}$$
+   $$r_{\text{sub-tol}} = 10.0 \cdot \left(\frac{\epsilon - e_{\text{rel}}}{\epsilon}\right)^{1.5}$$
    Driving residual error down further toward $5\%$ and $0^\circ$.
 4. **Target Tolerance Terminal Bonus**:
    A $+100.0$ terminal bonus is awarded upon crossing the threshold, triggering immediate goal resampling and step extension.
