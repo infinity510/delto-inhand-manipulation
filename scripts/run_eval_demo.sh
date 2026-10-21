@@ -20,21 +20,21 @@ echo "================================================================="
 case "$1" in
   1)
     echo "[Mode 1] Running Clean Baseline 3D Viewer..."
-    python3 in_hand_manipulation/evaluate.py \
+    python3 src/evaluation/evaluate.py \
       --checkpoint models/best_model_clean.pth \
       --render \
       --hold_time 1.5
     ;;
   2)
     echo "[Mode 2] Running Sim-to-Real DR 3D Viewer..."
-    python3 in_hand_manipulation/evaluate_dr.py \
+    python3 src/evaluation/evaluate_dr.py \
       --checkpoint models/best_model_with_dr.pth \
       --render \
       --smooth_alpha 0.50
     ;;
   3)
     echo "[Mode 3] Running 16-Worker Parallel DR Benchmark..."
-    python3 in_hand_manipulation/evaluate_dr.py \
+    python3 src/evaluation/evaluate_dr.py \
       --checkpoint models/best_model_with_dr.pth \
       --episodes_per_range 100 \
       --num_workers 16 \

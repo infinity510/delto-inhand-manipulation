@@ -25,11 +25,16 @@ import torch
 import multiprocessing as mp
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
-from scripts.in_hand_manipulation.train_ppo import DeltoInHandManipulationEnv, ActorNetwork
+try:
+    from src.training.train_ppo import DeltoInHandManipulationEnv, ActorNetwork
+except ImportError:
+    from training.train_ppo import DeltoInHandManipulationEnv, ActorNetwork
 
 # Global worker state for multi-process pool
 _worker_actor = None
@@ -262,7 +267,7 @@ def evaluate_checkpoint(
 def main():
     parser = argparse.ArgumentParser(description="Continuous Background Model Evaluator")
     parser.add_argument("--watch_dir", type=str, required=True, help="Directory to monitor for checkpoints")
-    parser.add_argument("--scene_xml", type=str, default="in_hand_manipulation/simulation/scene_cube.xml")
+    parser.add_argument("--scene_xml", type=str, default="src/simulation/scene_cube.xml")
     parser.add_argument("--num_episodes", type=int, default=500, help="Number of random test episodes per checkpoint (default: 500)")
     parser.add_argument("--num_workers", type=int, default=4, help="Number of parallel evaluation workers (default: 4)")
     parser.add_argument("--max_goal_angle", type=float, default=1.57, help="Max target rotation angle in radians")

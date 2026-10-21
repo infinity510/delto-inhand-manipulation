@@ -24,7 +24,7 @@ fi
 
 echo ""
 echo "[Step 1/2] Running 16-Worker Sim-to-Real Domain Randomization Benchmark..."
-python3 in_hand_manipulation/evaluate_dr.py \
+python3 src/evaluation/evaluate_dr.py \
   --checkpoint "${CHECKPOINT_DR}" \
   --episodes_per_range 100 \
   --num_workers 16 \
@@ -34,7 +34,7 @@ python3 in_hand_manipulation/evaluate_dr.py \
 
 echo ""
 echo "[Step 2/2] Running 16-Worker Nominal Clean Baseline Benchmark..."
-python3 in_hand_manipulation/evaluate.py \
+python3 src/evaluation/evaluate.py \
   --checkpoint "${CHECKPOINT_CLEAN}" \
   --episodes_per_range 100 \
   --num_workers 16 \

@@ -240,30 +240,29 @@ Range 2 (40° - 90° Large Dynamic In-Hand Gaiting):
 │   ├── generate_documentation_pdf.py       # KaTeX Chrome PDF compiler script
 │   └── README.md                           # Scripts documentation
 │
-├── in_hand_manipulation/                   # Core simulation & RL Python package
-│   ├── __init__.py                         # Package initializer
-│   ├── train_ppo.py                        # PPO training engine & vectorized environments
-│   ├── train_bc.py                         # Behavior Cloning imitation learning
-│   ├── evaluate.py                         # Nominal stratified benchmark evaluator
-│   ├── evaluate_dr.py                      # Stressed Sim-to-Real benchmark evaluator
-│   ├── early_stopping_watchdog.py          # Auto-promotion & checkpoint watchdog
-│   ├── background_eval_worker.py           # Background evaluation daemon
-│   ├── diagnose_failures.py                # Failure mode diagnostic profiler
+├── src/                                    # Modular source code package
+│   ├── training/                           # PPO & BC training engines & daemons
+│   │   ├── train_ppo.py                    # PPO training engine & vectorized environments
+│   │   ├── train_bc.py                     # Behavior Cloning imitation learning
+│   │   ├── early_stopping_watchdog.py      # Auto-promotion & checkpoint watchdog
+│   │   └── background_eval_worker.py       # Asynchronous evaluation worker daemon
 │   ├── simulation/                         # MuJoCo XML kinematics, URDFs, meshes
-│   │   ├── __init__.py                     # Package initializer
 │   │   ├── scene_cube.xml                  # Main MuJoCo simulation environment
 │   │   ├── gripper_only.xml                # Delto-3F kinematic definition
 │   │   ├── gripper_only.urdf               # Kinematic URDF definition
 │   │   └── meshes/                         # Collision & visual STL meshes
-│   └── teleop/                             # Vision teleoperation & dataset pipeline
-│       ├── __init__.py                     # Package initializer
-│       ├── collect_data.py                 # Teleop data recorder with HER labeling
-│       ├── preprocess_data.py              # Dead-time trimmer & velocity filter
-│       ├── replay_data.py                  # Demonstration replay visualizer
-│       ├── inspect_data.py                 # Dataset quality & jitter auditor
-│       ├── webcam_aruco_tracker.py         # Threaded zero-latency ArUco tracker
-│       ├── camera_calib.npz                # Optical camera calibration matrix
-│       └── delto_3f_retarget.yml           # Inverse Kinematics joint retargeting
+│   ├── teleoperation/                      # Vision teleoperation & dataset pipeline
+│   │   ├── collect_data.py                 # Teleop data recorder with HER labeling
+│   │   ├── preprocess_data.py              # Dead-time trimmer & velocity filter
+│   │   ├── replay_data.py                  # Demonstration replay visualizer
+│   │   ├── inspect_data.py                 # Dataset quality & jitter auditor
+│   │   ├── webcam_aruco_tracker.py         # Threaded zero-latency ArUco tracker
+│   │   ├── camera_calib.npz                # Optical camera calibration matrix
+│   │   └── delto_3f_retarget.yml           # Inverse Kinematics joint retargeting
+│   └── evaluation/                         # Stratified benchmark evaluators & diagnostics
+│       ├── evaluate.py                     # Nominal stratified benchmark evaluator
+│       ├── evaluate_dr.py                  # Stressed Sim-to-Real benchmark evaluator
+│       └── diagnose_failures.py            # Failure mode diagnostic profiler
 ```
 
 ---
@@ -293,13 +292,13 @@ Run the interactive MuJoCo passive 3D viewer to watch the policy perform live in
 
 ```bash
 # Option A: Nominal Clean Presentation Model (Ideal kinematics for video demonstration)
-python3 in_hand_manipulation/evaluate.py \
+python3 src/evaluation/evaluate.py \
     --checkpoint models/best_model_clean.pth \
     --render \
     --hold_time 1.5
 
 # Option B: Sim-to-Real Domain Randomization Champion (With live latency, sensor jitter, and EMA filtering)
-python3 in_hand_manipulation/evaluate_dr.py \
+python3 src/evaluation/evaluate_dr.py \
     --checkpoint models/best_model_with_dr.pth \
     --render \
     --smooth_alpha 0.50
@@ -316,7 +315,7 @@ bash scripts/run_eval_demo.sh
 Execute the full 600-episode canonical benchmark across 16 parallel CPU workers:
 
 ```bash
-python3 in_hand_manipulation/evaluate_dr.py \
+python3 src/evaluation/evaluate_dr.py \
     --checkpoint models/best_model_with_dr.pth \
     --episodes_per_range 100 \
     --num_workers 16 \
@@ -336,7 +335,7 @@ bash scripts/run_benchmark.sh
 Launch distributed PPO fine-tuning with the early-stopping watchdog:
 
 ```bash
-python3 in_hand_manipulation/train_ppo.py \
+python3 src/training/train_ppo.py \
     --pretrained_actor models/best_model_with_dr.pth \
     --num_envs 16 \
     --smooth_alpha 0.50 \

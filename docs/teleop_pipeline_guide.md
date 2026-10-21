@@ -25,14 +25,14 @@ delto-inhand-manipulation/
 │   ├── raw/                               # Raw recorded HDF5 demonstration episodes
 │   └── processed/                         # Filtered & trimmed HDF5 datasets
 │
-├── in_hand_manipulation/
+├── src/
 │   ├── simulation/
 │   │   ├── scene_cube.xml                 # MuJoCo scene with Delto-3F gripper & objects
 │   │   ├── gripper_only.xml               # Gripper MuJoCo kinematic model
 │   │   ├── gripper_only.urdf              # Delto-3F URDF definition
 │   │   └── meshes/                        # High-resolution collision STL meshes
 │   │
-│   ├── teleop/
+│   ├── teleoperation/
 │   │   ├── collect_data.py                # Main data collection script (HER, Multi-object)
 │   │   ├── preprocess_data.py             # Data filtering and dead-time trimming pipeline
 │   │   ├── replay_data.py                 # Interactive demonstration playback in MuJoCo
@@ -40,10 +40,16 @@ delto-inhand-manipulation/
 │   │   ├── webcam_aruco_tracker.py        # Threaded zero-latency ArUco tracking pipeline
 │   │   └── delto_3f_retarget.yml          # IK retargeting configuration
 │   │
-│   ├── train_bc.py                        # Behavior Cloning (imitation learning)
-│   ├── train_ppo.py                       # Deep PPO reinforcement learning engine
-│   ├── evaluate.py                        # Nominal baseline benchmark evaluator
-│   └── evaluate_dr.py                     # Stressed Sim-to-Real benchmark evaluator
+│   ├── training/
+│   │   ├── train_bc.py                    # Behavior Cloning (imitation learning)
+│   │   ├── train_ppo.py                   # Deep PPO reinforcement learning engine
+│   │   ├── early_stopping_watchdog.py     # Automated early stopping daemon
+│   │   └── background_eval_worker.py      # Asynchronous evaluation worker
+│   │
+│   └── evaluation/
+│       ├── evaluate.py                    # Nominal baseline benchmark evaluator
+│       ├── evaluate_dr.py                 # Stressed Sim-to-Real benchmark evaluator
+│       └── diagnose_failures.py           # Failure mode diagnostic profiler
 │
 └── docs/
     └── teleop_pipeline_guide.md           # This documentation file
@@ -109,7 +115,7 @@ The recorded `data/<object_name>_<index>.hdf5` files are heavily decoupled from 
 ## 6. Training Pipeline (Isaac Sim)
 
 The ultimate goal is to train a policy network in NVIDIA Isaac Sim.
-1. **Data Preprocessing:** Before training, run `preprocess_data.py` to trim out static "dead time" at the beginning and end of recordings, ensuring the network doesn't learn to just stand still. This saves cleaned data to `data_processed/`.
+1. **Data Preprocessing:** Before training, run `preprocess_data.py` to trim out static "dead time" at the beginning and end of recordings, ensuring the network doesn't learn to just stand still. This saves cleaned data to `data/processed/`.
 2. **Behavioral Cloning (IL):** Write a PyTorch Dataloader to read the HDF5 files. Train a network to predict `action` given `(robot_qpos, robot_qvel, object_pos, object_quat, target_quat, object_id_one_hot)`. 
 *(Note: `object_id_one_hot` is a 5-dimensional one-hot encoded vector representing the `object_id` from the episode metadata, ensuring the policy generalizes across different shapes.)*
 3. **RL Fine-Tuning:** Deploy the pre-trained BC policy into an Isaac Sim Articulation environment. Use Reinforcement Learning (e.g., PPO via OmniIsaacGymEnvs) to fine-tune the policy to achieve the `target_quat` robustly, rewarding minimal distance to the goal orientation.
@@ -118,10 +124,11 @@ The ultimate goal is to train a policy network in NVIDIA Isaac Sim.
 
 ## 7. How to Run
 
+All commands are executed from the project root directory:
+
 ### Data Collection (MuJoCo)
 ```bash
-cd in_hand_manipulation/teleop
-python collect_data.py
+python3 src/teleoperation/collect_data.py
 # Controls: 
 # 'r' = Reset hand and clear workspace
 # '1'-'3' = Spawn specific object shape (Cylinder, Cube, Cuboid)
@@ -134,8 +141,7 @@ python collect_data.py
 
 ### Replay Data
 ```bash
-cd in_hand_manipulation/teleop
-python replay_data.py
+python3 src/teleoperation/replay_data.py
 # Controls:
 # SPACE = Pause / Play
 # Left / Right Arrows = Skip to prev/next recording
@@ -143,20 +149,18 @@ python replay_data.py
 
 ### Data Preprocessing
 ```bash
-python in_hand_manipulation/teleop/preprocess_data.py
+python3 src/teleoperation/preprocess_data.py --input_dir data/raw --output_dir data/processed
 # Reads from data/raw/ and outputs trimmed episodes to data/processed/
 ```
 
-### Sandbox Teleoperation (No Data Saved)
+### Data Inspection & Validation
 ```bash
-cd in_hand_manipulation/teleop
-python teleop_sim.py
+python3 src/teleoperation/inspect_data.py data/processed
 ```
 
 ### Webcam Tracking Debugger
 ```bash
-cd in_hand_manipulation/teleop
-python webcam_aruco_tracker.py
+python3 src/teleoperation/webcam_aruco_tracker.py
 ```
 
 ---

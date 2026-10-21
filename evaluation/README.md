@@ -40,7 +40,7 @@ The canonical benchmark consists of **600 stratified evaluation episodes** distr
 
 ### 1. High-Throughput Sim-to-Real Domain Randomization Benchmark
 ```bash
-python3 in_hand_manipulation/evaluate_dr.py \
+python3 src/evaluation/evaluate_dr.py \
   --checkpoint models/best_model_with_dr.pth \
   --episodes_per_range 100 \
   --num_workers 16 \
@@ -51,7 +51,7 @@ python3 in_hand_manipulation/evaluate_dr.py \
 
 ### 2. High-Throughput Clean Baseline Benchmark
 ```bash
-python3 in_hand_manipulation/evaluate.py \
+python3 src/evaluation/evaluate.py \
   --checkpoint models/best_model_clean.pth \
   --episodes_per_range 100 \
   --num_workers 16 \

@@ -56,4 +56,4 @@ Documentation = "https://github.com/infinity510/delto-inhand-manipulation/tree/m
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["in_hand_manipulation*"]
+include = ["src*"]

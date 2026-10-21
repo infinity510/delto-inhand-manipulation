@@ -43,23 +43,23 @@ Each `.hdf5` file corresponds to an individual in-hand manipulation trajectory s
 ### 1. Data Collection
 Collect raw human demonstrations using webcam ArUco tracking:
 ```bash
-python3 in_hand_manipulation/teleop/collect_data.py
+python3 src/teleoperation/collect_data.py
 ```
 
 ### 2. Quality Inspection
 Audit recorded trajectories for drops, object translation, and actuator jerk:
 ```bash
-python3 in_hand_manipulation/teleop/inspect_data.py data/processed
+python3 src/teleoperation/inspect_data.py data/processed
 ```
 
 ### 3. Preprocessing & Dead-Time Trimming
 Trim static idling frames at the start/end of episodes:
 ```bash
-python3 in_hand_manipulation/teleop/preprocess_data.py --input_dir data/raw --output_dir data/processed
+python3 src/teleoperation/preprocess_data.py --input_dir data/raw --output_dir data/processed
 ```
 
 ### 4. Interactive Replay
 Watch recorded trajectories replayed in the MuJoCo 3D viewer:
 ```bash
-python3 in_hand_manipulation/teleop/replay_data.py
+python3 src/teleoperation/replay_data.py
 ```

@@ -1,6 +1,6 @@
 retargeting:
   type: position
-  urdf_path: in_hand_manipulation/simulation/gripper_only.urdf
+  urdf_path: src/simulation/gripper_only.urdf
   target_joint_names:
     - gripper_f1m1_joint
     - gripper_f1m2_joint

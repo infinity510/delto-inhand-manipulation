@@ -453,7 +453,6 @@ fine_tune_training/
 experiments/
 metrics.jsonl
 *.jsonl
-!in_hand_manipulation/bc_actor_checkpoint.pth
 !models/best_model.pth
 !models/best_model_with_dr.pth
 !models/best_model_clean.pth

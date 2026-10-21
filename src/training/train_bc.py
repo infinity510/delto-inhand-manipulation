@@ -201,7 +201,7 @@ class ActorNetwork(nn.Module):
 def train():
     # Attempt to locate the dataset (supports structured data/processed, data/raw, and legacy fallbacks)
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(base_dir) # Go up to DC_PROJECT
+    parent_dir = os.path.dirname(os.path.dirname(base_dir)) # Go up to project root
     candidate_data_dirs = [
         os.path.join(parent_dir, 'data', 'processed'),
         os.path.join(parent_dir, 'data_processed'),
@@ -300,8 +300,10 @@ def train():
                     'hidden_dims': [512, 512, 256]
                 }
             }
+            save_path = os.path.join(parent_dir, 'models', 'bc_actor_checkpoint.pth')
+            torch.save(checkpoint, save_path)
             torch.save(checkpoint, os.path.join(base_dir, 'bc_actor_checkpoint.pth'))
-            print(f"  -> Saved new best model (Val Loss: {val_loss:.4f})")
+            print(f"  -> Saved new best model to {save_path} (Val Loss: {val_loss:.4f})")
             
     print("\nPretraining Complete! Best checkpoint saved to 'bc_actor_checkpoint.pth'")
 

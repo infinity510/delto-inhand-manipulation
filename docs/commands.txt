@@ -9,13 +9,13 @@
 bash scripts/run_eval_demo.sh
 
 # B. Nominal Clean Presentation Viewer (Ideal kinematics for video capture)
-python3 in_hand_manipulation/evaluate.py \
+python3 src/evaluation/evaluate.py \
   --checkpoint models/best_model_clean.pth \
   --render \
   --hold_time 1.5
 
 # C. Sim-to-Real Domain Randomization Viewer (Real-time HUD, sensor noise, latency)
-python3 in_hand_manipulation/evaluate_dr.py \
+python3 src/evaluation/evaluate_dr.py \
   --checkpoint models/best_model_with_dr.pth \
   --render \
   --smooth_alpha 0.50
@@ -24,7 +24,7 @@ python3 in_hand_manipulation/evaluate_dr.py \
 # 2. HIGH-THROUGHPUT PARALLEL BENCHMARKING
 # ------------------------------------------------------------------------------
 # A. 16-Worker Stressed Sim-to-Real Benchmark (600 stratified episodes)
-python3 in_hand_manipulation/evaluate_dr.py \
+python3 src/evaluation/evaluate_dr.py \
   --checkpoint models/best_model_with_dr.pth \
   --episodes_per_range 100 \
   --num_workers 16 \
@@ -33,7 +33,7 @@ python3 in_hand_manipulation/evaluate_dr.py \
   --report_file evaluation/reports/EVALUATION_DR_REPORT.md
 
 # B. 16-Worker Clean Nominal Baseline Benchmark (600 stratified episodes)
-python3 in_hand_manipulation/evaluate.py \
+python3 src/evaluation/evaluate.py \
   --checkpoint models/best_model_clean.pth \
   --episodes_per_range 100 \
   --num_workers 16 \
@@ -46,16 +46,16 @@ bash scripts/run_benchmark.sh
 # 3. TELEOPERATION, DEMONSTRATION & DATA PIPELINE
 # ------------------------------------------------------------------------------
 # A. Collect raw human demonstrations via webcam ArUco tracking
-python3 in_hand_manipulation/teleop/collect_data.py
+python3 src/teleoperation/collect_data.py
 
 # B. Inspect quality of collected demonstrations (drop detection & action jitter)
-python3 in_hand_manipulation/teleop/inspect_data.py data/processed
+python3 src/teleoperation/inspect_data.py data/processed
 
 # C. Replay demonstration trajectories in MuJoCo viewer
-python3 in_hand_manipulation/teleop/replay_data.py
+python3 src/teleoperation/replay_data.py
 
 # D. Preprocess raw demonstrations (trim dead time, compute smooth velocities)
-python3 in_hand_manipulation/teleop/preprocess_data.py \
+python3 src/teleoperation/preprocess_data.py \
   --input_dir data/raw \
   --output_dir data/processed
 
@@ -63,10 +63,10 @@ python3 in_hand_manipulation/teleop/preprocess_data.py \
 # 4. POLICY TRAINING & REINFORCEMENT LEARNING
 # ------------------------------------------------------------------------------
 # A. Pre-train Behavior Cloning (BC) Actor Network from demonstrations
-python3 in_hand_manipulation/train_bc.py
+python3 src/training/train_bc.py
 
 # B. Launch Deep PPO Reinforcement Learning with Domain Randomization
-python3 in_hand_manipulation/train_ppo.py \
+python3 src/training/train_ppo.py \
   --pretrained_actor models/best_model_with_dr.pth \
   --num_envs 16 \
   --smooth_alpha 0.50 \
@@ -78,5 +78,5 @@ python3 in_hand_manipulation/train_ppo.py \
   --output_dir experiments/dr_finetune_run1
 
 # C. Failure Mode Diagnostic Profiler
-python3 in_hand_manipulation/diagnose_failures.py
+python3 src/evaluation/diagnose_failures.py
 

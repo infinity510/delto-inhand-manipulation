@@ -162,7 +162,7 @@ The robotics literature often evaluates orientation tasks using loose absolute e
 ### 5.2 1.5-Second Firm Hold Lock-In for Live Demonstrations
 * **The Presentation Requirement**: In live demonstrations (e.g., to an academic committee or professor), an agent that briefly hits the target angle and immediately twitches or lets go looks unconvincing.
 * **The Implementation**:
-  * Added `--hold_time 1.5` and `--max_goals 1` to `in_hand_manipulation/evaluate.py`.
+  * Added `--hold_time 1.5` and `--max_goals 1` to `src/evaluation/evaluate.py`.
   * The instant the object error falls below tolerance, the controller locks fingertip control torques (`env.data.ctrl[:] = last_ctrl`) and damps residual joint velocities (`qvel[:12] *= 0.85`).
   * The gripper holds the object rock-solid in the target orientation for $\ge 1.5$ continuous seconds while displaying a live HUD countdown before completing the episode.
 
@@ -184,7 +184,7 @@ The robotics literature often evaluates orientation tasks using loose absolute e
 ## 6. Software Engineering & Production Safety Guardrails
 
 ### 6.1 Champion Rollback Protection Daemon
-* Implemented `in_hand_manipulation/background_eval_worker.py`:
+* Implemented `src/training/background_eval_worker.py`:
   * Continuously monitors training checkpoints in the background.
   * Evaluates candidates across randomized multi-worker episodes.
   * **Strict Rollback Guard**: A newly trained checkpoint is **only** promoted to `models/best_model.pth` if its composite benchmark score strictly surpasses the reigning champion. Any degraded checkpoint is quarantined, protecting production assets.
@@ -204,7 +204,7 @@ The robotics literature often evaluates orientation tasks using loose absolute e
 To run the interactive 3D demonstration with the professor featuring the **1.5-second firm hold lock-in**, **low-pass action smoothing**, and **single green target orientation arrow**:
 
 ```bash
-python3 in_hand_manipulation/evaluate.py \
+python3 src/evaluation/evaluate.py \
   --checkpoint models/best_model.pth \
   --render \
   --hold_time 1.5 \
@@ -218,7 +218,7 @@ python3 in_hand_manipulation/evaluate.py \
 To run fast parallel evaluation across all objects and angular ranges using 16 parallel CPU workers:
 
 ```bash
-python3 in_hand_manipulation/evaluate.py \
+python3 src/evaluation/evaluate.py \
   --checkpoint models/best_model.pth \
   --num_workers 16 \
   --episodes_per_range 10 \
@@ -480,7 +480,7 @@ The fixes were validated via empirical test runs in MuJoCo. Training runs smooth
 
 To execute the full fine-tuning run:
 ```bash
-python3 in_hand_manipulation/train_ppo.py \
+python3 src/training/train_ppo.py \
   --iterations 600 \
   --warmup_iters 40 \
   --max_steps 400 \
@@ -497,7 +497,7 @@ If you want to train for additional iterations (e.g. 400 more iterations to reac
 2. Because the Critic and Actor are already fully calibrated, you set `--warmup_iters 0` so joint PPO training starts immediately from step 1 without an idle warm-up.
 
 ```bash
-python3 in_hand_manipulation/train_ppo.py \
+python3 src/training/train_ppo.py \
   --checkpoint checkpoints_ppo/ppo_latest_actor.pth \
   --warmup_iters 0 \
   --iterations 400 \
@@ -692,7 +692,7 @@ The 1,000-iteration Continuous PPO training run completed at 18:04:
 ### Empirical Breakthrough:
 Upon deploying the Stage 1 High-Precision configuration:
 ```bash
-python3 in_hand_manipulation/train_ppo.py \
+python3 src/training/train_ppo.py \
   --checkpoint checkpoints_ppo/ppo_latest_actor.pth \
   --num_envs 16 \
   --warmup_iters 10 \
@@ -882,7 +882,7 @@ When saving and resuming checkpoints (`ppo_best_actor.pth`, `ppo_latest_actor.pt
 To benchmark policies under standardized, stage-specific physical constraints, three dedicated evaluation scripts were created:
 
 ```text
-in_hand_manipulation/
+legacy_evaluators/ (historical)
 ├── evaluate_stage1.py    # Stage 1: Tripod Precision Envelope (theta <= 45.8 deg)
 ├── evaluate_stage2.py    # Stage 2: Large-Angle Gaiting Envelope (34.4 deg <= theta <= 80.2 deg)
 └── evaluate_stage3.py    # Stage 3: Full SO(3) Extreme Flips & Chaining (theta up to 180.0 deg)
@@ -988,7 +988,7 @@ During an extended 8,900-iteration Stage 1 training run, the policy exhibited no
 - **Execution Command for 10,000 Iterations Stage 1:**
   Resumes from `ppo_checkpoint_iter_2000.pth` with full 16-core parallelism, balanced progress & precision rewards, and warm-up bypassed:
   ```bash
-  python3 in_hand_manipulation/train_ppo.py \
+  python3 src/training/train_ppo.py \
     --iterations 10000 \
     --num_envs 16 \
     --checkpoint checkpoints_ppo/ppo_checkpoint_iter_2000.pth \
@@ -1032,7 +1032,7 @@ Telemetry analysis of `progress.csv` revealed a sharp peak followed by an oscill
 
 ### 3. Production Retraining Command
 ```bash
-python3 in_hand_manipulation/train_ppo.py \
+python3 src/training/train_ppo.py \
   --iterations 10000 \
   --num_envs 16 \
   --checkpoint checkpoints_ppo/ppo_stage1_iter125_golden.pth \
@@ -1463,8 +1463,8 @@ Between Iteration 20,700 and Iteration 30,300 of the continuous run:
    - The $+50.0$ terminal success bonus was mathematically dwarfed by the risk of losing passive survival points. Policy gradients inevitably optimized for passive holding.
 
 ### 2. Workspace Standardization & Dedicated Champion Repository
-1. **`best_model/` Champion Repository**:
-   - Created `best_model/best_model.pth` (MD5: `eb5188bea9f3b0bd7164d9b53b7a2ea0`), permanently archiving the Iteration 20,700 champion model with verified metrics:
+1. **`models/` Champion Repository**:
+   - Created `models/best_model.pth` (MD5: `eb5188bea9f3b0bd7164d9b53b7a2ea0`), permanently archiving the Iteration 20,700 champion model with verified metrics:
      - **Overall Success (@10% Error)**: **$63.33\%$**
      - **Rotational Closure**: **$76.01\%$**
      - **Pre-Goal Retention**: **$88.33\%$**
@@ -1473,17 +1473,17 @@ Between Iteration 20,700 and Iteration 30,300 of the continuous run:
      - **Cuboid**: $60.0\%$ Success, $64.5\%$ Closure, $70.0\%$ Retention
    - Whitelisted in `.gitignore` so weights are fully tracked in version control.
 2. **Purged Obsolete Scripts**:
-   - Cleaned 7 obsolete/redundant test scripts from `in_hand_manipulation/` (`evaluate_stage1/2/3.py`, `evaluate_ppo.py`, `evaluate_bc.py`, `run_overnight_precision_pipeline.py`, `evaluate_all_benchmarks.py`), leaving only active engines.
+   - Cleaned 7 obsolete/redundant test scripts (`evaluate_stage1/2/3.py`, `evaluate_ppo.py`, `evaluate_bc.py`, `run_overnight_precision_pipeline.py`, `evaluate_all_benchmarks.py`), leaving only active engines.
 
 ### 3. Mathematical Reward Recalibration:
 - **Pure Angular Progress**: Replaced static posture reward with dynamic movement velocity $\Delta \theta = \theta_{\text{prev}} - \theta_{\text{cur}}$. Motionless holding yields exactly $0.0$ reward.
 - **Step Time Cost**: Injected $w_{\text{step\_penalty}} = 0.04$ per step, so stalling now incurs a negative return over time.
 - **Boosted Terminal Goal Bonus**: Raised $w_4 = 60.0$ so reaching the goal provides the dominant payoff.
-- **Initial Weights**: Re-seeded directly from `best_model/best_model.pth` ($63.3\%$ baseline) running toward the 70,000 global cumulative iteration cap.
+- **Initial Weights**: Re-seeded directly from `models/best_model.pth` ($63.3\%$ baseline) running toward the 70,000 global cumulative iteration cap.
 
 ## 37. Canonical Stratified Evaluator & Complete Workspace Pruning
 
-### 1. Unified Canonical Evaluation Protocol (`in_hand_manipulation/evaluate.py`)
+### 1. Unified Canonical Evaluation Protocol (`src/evaluation/evaluate.py`)
 To eliminate fragmented, redundant benchmark scripts, all evaluation logic was consolidated into a single standardized engine:
 - **Angle Range Stratification**:
   1. **Range 1 ($10.0^\circ \text{ to } 40.0^\circ$)**: Small-to-medium rotation envelope.
@@ -1499,7 +1499,7 @@ To eliminate fragmented, redundant benchmark scripts, all evaluation logic was c
   - `--num_workers`: Multi-worker parallel processing for headless runs (default 8).
 
 ### 2. Empirical Verification on Champion Model (60 Stratified Episodes)
-Benchmarking `best_model/best_model.pth` across both angle ranges:
+Benchmarking `models/best_model.pth` across both angle ranges:
 
 | Evaluation Metric | Range 1 ($10^\circ\text{--}40^\circ$) | Range 2 ($40^\circ\text{--}90^\circ$) | Grand Composite Total |
 | :--- | :--- | :--- | :--- |
@@ -1516,10 +1516,10 @@ Benchmarking `best_model/best_model.pth` across both angle ranges:
 
 ### 3. Full Workspace Pruning:
 - Removed obsolete evaluation scripts: `evaluate_10pct_best.py`, `evaluate_comprehensive.py`.
-- Removed legacy model checkpoint: `in_hand_manipulation/bc_actor_checkpoint.pth`.
+- Removed legacy model checkpoint: `models/bc_actor_checkpoint.pth` (consolidated into `models/`).
 - Removed legacy stage directories: `stage2a_eps25/` and `stage2b_eps20/` (saving ~78 MB).
 - Removed unused root files: `WhatsApp Video 2026-09-18 at 3.07.18 PM.mp4`.
-- Preserved: `stage1/stage1_best_model.pth`, `best_model/best_model.pth`, and active `stage2_unified/`.
+- Preserved: `stage1/stage1_best_model.pth`, `models/best_model.pth`, and active `stage2_unified/`.
 
 ---
 
@@ -1621,15 +1621,15 @@ The Delto gripper's 3-finger morphology without an opposable thumb physically li
 
 ### 2. Findings from Stages 3N, 3O, 3P
 - Exposing the policy to uniform $10^\circ \text{--} 90^\circ$ sampling causes policy dilution: the policy attempts to solve high-variance regrasping at the expense of Range 1 ($10^\circ \text{--} 40^\circ$) precision, degrading Range 1 success from $78.7\%$ down to $\sim 60\%$.
-- The optimal Pareto frontier was captured in Stage 3M ($10^\circ \text{--} 70^\circ$ curriculum), which reigns as the global champion (`best_model/best_model.pth`, MD5: `7db0136c...`).
+- The optimal Pareto frontier was captured in Stage 3M ($10^\circ \text{--} 70^\circ$ curriculum), which reigns as the global champion (`models/best_model.pth`, MD5: `7db0136c...`).
 
 ---
 
 ## 44. Autonomous Background Evaluation & Rollback Guard
 
 ### 1. Automated Regression Defense
-`in_hand_manipulation/background_eval_worker.py` evaluates candidate checkpoints asynchronously across multi-worker threads.
-- A new checkpoint is **only** promoted to `best_model/best_model.pth` if its composite benchmark score strictly surpasses the reigning champion.
+`src/training/background_eval_worker.py` evaluates candidate checkpoints asynchronously across multi-worker threads.
+- A new checkpoint is **only** promoted to `models/best_model.pth` if its composite benchmark score strictly surpasses the reigning champion.
 - Degraded candidates are automatically rejected, preventing regression and safeguarding production deployments.
 
 ---
@@ -1640,7 +1640,7 @@ The Delto gripper's 3-finger morphology without an opposable thumb physically li
 In earlier visualization iterations, rendering multiple 3-axis coordinate triads (blue for object, green for target) created visual occlusion during live MuJoCo rendering. The user could not easily discern the object's body from the surrounding coordinate arrows, especially when fingers interacted with the contact boundaries.
 
 ### 2. Engineering Solution: Single Anchored Target Vector
-Refactored `in_hand_manipulation/evaluate.py` to render **exactly one green arrow** showing the target orientation:
+Refactored `src/evaluation/evaluate.py` to render **exactly one green arrow** showing the target orientation:
 1. **Dynamic Translational Tracking**: The base of the arrow is anchored to the top face of the moving object:
    $$\mathbf{p}_{\text{base}} = \mathbf{p}_{\text{obj}} + \mathbf{R}_{\text{cur}} \cdot [0, 0, h_{\text{half}} + 0.005]^T$$
    As the hand lifts, tilts, and shifts the object, the arrow translates in lockstep.
@@ -1680,7 +1680,7 @@ for obj_id in [1, 2, 3]:
 This resulted in running all Cylinder episodes sequentially, then all Cube episodes, then all Cuboid episodes. In visual demonstrations, this appeared rigid, predictable, and artificial.
 
 ### 2. Engineering Solution: Stratified Randomized Permutation
-Integrated dynamic object sampling in `in_hand_manipulation/evaluate.py`:
+Integrated dynamic object sampling in `src/evaluation/evaluate.py`:
 1. **Stratified Sampling (`--sample_mode shuffle`, default)**:
    - Assembles the balanced pool of episodes for all 3 objects.
    - Executes `_shuffle_avoid_adjacent_repeats(items)`: permutes the pool while rejecting consecutive episodes with identical objects.
@@ -1703,7 +1703,7 @@ Direct zero-shot transfer from simulation to the physical Delto hand fails due t
 4. **Silicone Contact Variation**: Real silicone pads accumulate dust, wear down, and vary in friction ($\mu \approx 2.1\text{--}3.9$).
 
 ### 2. Engineering Solution: Drop-In Sim-to-Real Domain Randomization
-Integrated into `DeltoInHandManipulationEnv` (`in_hand_manipulation/train_ppo.py`):
+Integrated into `DeltoInHandManipulationEnv` (`src/training/train_ppo.py`):
 - **Action Delay Buffer (`--action_delay_max 2`)**: FIFO queue randomizing setpoint latency across $1\text{--}2$ timesteps ($20\text{--}40\text{ ms}$ at $50\text{ Hz}$).
 - **Sensor Observation Noise**:
   - Joint positions: $\mathcal{N}(0, 0.012^2)$ radians.
@@ -1743,7 +1743,7 @@ During early Stage 4 training under full Sim-to-Real Domain Randomization ($20\t
    - The Gaussian policy log-std collapsed to $-2.67$ ($\sigma \approx 3.9^\circ$) with an entropy coefficient of $0.0003$. Exploration noise vanished, locking the policy into this conservative sub-optimal basin.
 
 ### 3. Engineering Solution: Progressive Curricular Sim-to-Real Architecture
-Implemented in `in_hand_manipulation/train_ppo.py`:
+Implemented in `src/training/train_ppo.py`:
 1. **Tri-Phase Latency & Sensor Noise Curriculum**:
    - **Phase 1 (Iterations 1 to 300)**: $0\text{--}1$ step delay ($0\text{--}20\text{ ms}$, randomized per episode), noise scale $0.25$. Lets the policy adapt smoothly to phase lag without catastrophic drops.
    - **Phase 2 (Iterations 301 to 800)**: $0\text{--}1$ step delay ($0\text{--}20\text{ ms}$), noise scale $0.50$.
@@ -1767,7 +1767,7 @@ Implemented in `in_hand_manipulation/train_ppo.py`:
 ### 1. The Need for Automated Degradation Intervention
 In reinforcement learning with curricula, policies often achieve an optimal Pareto peak across dexterity and stability before over-fitting or degrading under later, harsher curriculum phases (e.g. higher noise or uncompensated delay). Manually watching training logs to catch the peak is inefficient and error-prone.
 
-### 2. Engineering Architecture (`in_hand_manipulation/early_stopping_watchdog.py`)
+### 2. Engineering Architecture (`src/training/early_stopping_watchdog.py`)
 Developed a standalone watchdog daemon that runs concurrently alongside training:
 1. **Continuous History Analysis**:
    - Scans `eval_benchmark_history.csv` and tracks the true all-time peak composite score across the entire training history.
@@ -1780,13 +1780,13 @@ Developed a standalone watchdog daemon that runs concurrently alongside training
    - Emits `stop.flag` and `training_done.flag` to stop downstream evaluation workers.
 4. **Autonomous Champion Promotion & Reporting**:
    - Automatically promotes the peak checkpoint to `ppo_final_champion_actor.pth`.
-   - If the peak score strictly exceeds the global baseline ($0.7026$), automatically updates `best_model/best_model.pth` and generates an updated `README.md`.
+   - If the peak score strictly exceeds the global baseline ($0.7026$), automatically updates `models/best_model.pth` and generates an updated `README.md`.
    - Writes `DEGRADATION_STOP_REPORT.md` documenting the exact mathematical rationale and progression leading to the stop decision.
 
 ### 3. Empirical Results: New Champion Model Locked In
 - **Peak Iteration**: **Iteration 300** of `stage4_robust_10k`.
 - **120-Episode Peak Score**: **`0.7690`** (Success: `70.8%`, Closure: `79.4%`, Retention: `88.3%`).
-- **Canonical 600-Episode Benchmark Verification (`best_model/best_model.pth`)**:
+- **Canonical 600-Episode Benchmark Verification (`models/best_model.pth`)**:
   - **Overall Benchmark Score**: **`0.7149`** (surpassing the prior `0.7026` record).
   - **Range 1 ($10^\circ \text{--} 40^\circ$)**: **`77.7%` Success**, **`88.1%` Closure**, **`98.0%` Retention (2% drops)**.
   - **Cylinder in Range 1**: **`91.0%` Success** with **`92.8%` Closure**!
@@ -1798,7 +1798,7 @@ Developed a standalone watchdog daemon that runs concurrently alongside training
 ## 51. Dedicated Sim-to-Real Domain Randomization Evaluation Suite (`evaluate_dr.py`)
 
 ### 1. Purpose and Separation of Evaluation Protocols
-To rigorously benchmark policy transferability to the physical Delto Gripper-3F without relying on idealized simulator conditions, a dedicated evaluator was designed (`in_hand_manipulation/evaluate_dr.py`):
+To rigorously benchmark policy transferability to the physical Delto Gripper-3F without relying on idealized simulator conditions, a dedicated evaluator was designed (`src/evaluation/evaluate_dr.py`):
 1. **Clean Baseline (`evaluate.py`)**: Tests dexterity and upper-bound kinematics under nominal conditions (zero latency, zero sensor jitter, exact nominal physics) for visual presentations and baseline metrics.
 2. **Stressed Sim-to-Real Benchmark (`evaluate_dr.py`)**: Stresses the policy with simultaneous hardware transport delay, sensor noise, dynamic silicone surface degradation, object property variance, and non-privileged observations.
 
@@ -1819,7 +1819,7 @@ To rigorously benchmark policy transferability to the physical Delto Gripper-3F 
 
 ### 3. Canonical 600-Episode Benchmark Comparison: Clean Simulation vs. Domain Randomization
 
-Both benchmarks were executed on the reigning champion checkpoint (`best_model/best_model.pth`) across identical seeds, stratified over 300 Range 1 ($10^\circ\text{--}40^\circ$) and 300 Range 2 ($40^\circ\text{--}90^\circ$) episodes (100 episodes per object per range):
+Both benchmarks were executed on the reigning champion checkpoint (`models/best_model.pth`) across identical seeds, stratified over 300 Range 1 ($10^\circ\text{--}40^\circ$) and 300 Range 2 ($40^\circ\text{--}90^\circ$) episodes (100 episodes per object per range):
 
 | Evaluation Metric | Clean Baseline (`evaluate.py`) | Stressed DR (`evaluate_dr.py`) | Transfer Delta |
 | :--- | :--- | :--- | :--- |

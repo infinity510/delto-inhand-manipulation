@@ -5,11 +5,14 @@ import torch
 from scipy.spatial import transform
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from in_hand_manipulation.train_ppo import DeltoInHandManipulationEnv, ActorNetwork
+try:
+    from src.training.train_ppo import DeltoInHandManipulationEnv, ActorNetwork
+except ImportError:
+    from training.train_ppo import DeltoInHandManipulationEnv, ActorNetwork
 
 candidate_ckpts = [
     os.path.join(PROJECT_ROOT, "models", "best_model_with_dr.pth"),
@@ -34,7 +37,7 @@ actor.eval()
 obs_mean = ckpt.get("obs_mean", None)
 obs_std = ckpt.get("obs_std", None)
 
-scene_xml_path = os.path.join(SCRIPT_DIR, "simulation", "scene_cube.xml")
+scene_xml_path = os.path.join(PROJECT_ROOT, "src", "simulation", "scene_cube.xml")
 
 env = DeltoInHandManipulationEnv(
     scene_xml_path=scene_xml_path,

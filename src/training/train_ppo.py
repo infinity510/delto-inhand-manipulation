@@ -2354,18 +2354,18 @@ def main():
     
     # Resolve project file paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(script_dir) if os.path.basename(script_dir) == "in_hand_manipulation" else script_dir
+    project_root = os.path.dirname(os.path.dirname(script_dir))
     
     ckpt_path = args.checkpoint
     if not ckpt_path:
-        cand1 = os.path.join(script_dir, "bc_actor_checkpoint.pth")
-        cand2 = os.path.join(project_root, "in_hand_manipulation/bc_actor_checkpoint.pth")
+        cand1 = os.path.join(project_root, "models", "bc_actor_checkpoint.pth")
+        cand2 = os.path.join(script_dir, "bc_actor_checkpoint.pth")
         ckpt_path = cand1 if os.path.exists(cand1) else cand2
         
     scene_path = args.scene_xml
     if not scene_path:
-        cand1 = os.path.join(script_dir, "simulation/scene_cube.xml")
-        cand2 = os.path.join(project_root, "in_hand_manipulation/simulation/scene_cube.xml")
+        cand1 = os.path.join(project_root, "src", "simulation", "scene_cube.xml")
+        cand2 = os.path.join(script_dir, "..", "simulation", "scene_cube.xml")
         scene_path = cand1 if os.path.exists(cand1) else cand2
         
     num_envs = 1 if args.render else args.num_envs
